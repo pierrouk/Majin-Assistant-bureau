@@ -255,11 +255,64 @@ void UIManager::_drawTamaMenu() {
 }
 
 void UIManager::_drawSetupWifi() { 
-    _mainSprite.fillScreen(COLOR_UI_BG); _mainSprite.fillRoundRect(160 - 20, 60, 15, 40, 5, COLOR_WHITE); _mainSprite.fillRoundRect(160 + 5, 60, 15, 40, 5, COLOR_WHITE); 
-    _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(top_center); _mainSprite.setFont(FONT_TITLE); _mainSprite.drawString("CONFIGURATION", 160, 110); 
-    _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(COLOR_PRIMARY); _mainSprite.drawString("1. Connectez-vous au WiFi:", 160, 150); 
-    _mainSprite.setFont(FONT_TITLE); _mainSprite.setTextColor(COLOR_ACCENT); _mainSprite.drawString("Majin_Setup", 160, 175); 
-    _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.drawString("2. Configurez le réseau", 160, 210); 
+    _mainSprite.fillScreen(COLOR_UI_BG); 
+    
+    if (_settings->isSetupDone()) {
+        // --- CAS 1 : ROBOT CONNECTÉ (Mode Infos) ---
+        // On affiche l'IP et le réseau pour info
+        
+        _mainSprite.setTextColor(COLOR_WHITE); 
+        _mainSprite.setTextDatum(top_center); 
+        _mainSprite.setFont(FONT_TITLE); 
+        _mainSprite.drawString("INFOS RESEAU", 160, 20); 
+
+        // Cadre stylé
+        _mainSprite.drawRoundRect(20, 60, 280, 100, 8, COLOR_PRIMARY);
+        
+        _mainSprite.setFont(FONT_UI);
+        _mainSprite.setTextDatum(middle_center);
+        
+        // Récupération dynamique du SSID (Nom du WiFi) et de l'IP
+        String ssid = WiFi.SSID();
+        String ip = _net->getIP();
+        
+        // Affichage
+        _mainSprite.setTextColor(COLOR_ACCENT);
+        _mainSprite.drawString("WiFi: " + ssid, 160, 90);
+        
+        _mainSprite.setTextColor(COLOR_SUCCESS);
+        _mainSprite.drawString("IP: " + ip, 160, 120);
+        
+        // Instructions de sortie
+        _mainSprite.setFont(FONT_SMALL);
+        _mainSprite.setTextColor(0xCE79);
+        _mainSprite.setTextDatum(bottom_center);
+        _mainSprite.drawString("Swipe ou Tap pour fermer", 160, 220);
+        
+    } else {
+        // --- CAS 2 : ROBOT NON CONFIGURÉ (Mode AP) ---
+        // Instructions de configuration d'origine
+        
+        _mainSprite.fillRoundRect(160 - 20, 60, 15, 40, 5, COLOR_WHITE); 
+        _mainSprite.fillRoundRect(160 + 5, 60, 15, 40, 5, COLOR_WHITE); 
+        
+        _mainSprite.setTextColor(COLOR_WHITE); 
+        _mainSprite.setTextDatum(top_center); 
+        _mainSprite.setFont(FONT_TITLE); 
+        _mainSprite.drawString("CONFIGURATION", 160, 110); 
+        
+        _mainSprite.setFont(FONT_SMALL); 
+        _mainSprite.setTextColor(COLOR_PRIMARY); 
+        _mainSprite.drawString("1. Connectez-vous au WiFi:", 160, 150); 
+        
+        _mainSprite.setFont(FONT_TITLE); 
+        _mainSprite.setTextColor(COLOR_ACCENT); 
+        _mainSprite.drawString("Majin_Setup", 160, 175); 
+        
+        _mainSprite.setFont(FONT_SMALL); 
+        _mainSprite.setTextColor(COLOR_WHITE); 
+        _mainSprite.drawString("2. Configurez le réseau", 160, 210); 
+    }
 }
 
 void UIManager::_drawSceneMenu() { 

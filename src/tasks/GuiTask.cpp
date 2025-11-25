@@ -43,15 +43,15 @@ void TaskGUI(void *pvParameters) {
             // A. SCÈNE VISAGE (Accueil)
             if (currentScene == SCENE_FACE) {
                 if (!majinSettings.isSetupDone()) {
-                   // Si pas configuré, tout mène au Setup
+                   // Mode "Premier Démarrage"
                    if (gesture == GESTURE_TAP || gesture == GESTURE_SWIPE_UP) {
                         majinUI.setScene(SCENE_SETUP_WIFI);
                         majinVoice.playNotification();
-                        majinCore.setMood(MOOD_HAPPY); 
                     }
                 } 
                 else {
-                    // Mode Normal
+                    // Mode Normal (Configuré)
+                    
                     if (gesture == GESTURE_SWIPE_UP) { 
                         majinUI.setScene(SCENE_MENU); 
                         majinVoice.playNotification(); 
@@ -59,6 +59,13 @@ void TaskGUI(void *pvParameters) {
                     else if (gesture == GESTURE_SWIPE_DOWN) { 
                         majinUI.setScene(SCENE_TAMA_MENU); 
                         majinVoice.playNotification(); 
+                    }
+                    // 👇 MODIFICATION ICI : Le Tap ouvre les infos de config
+                    else if (gesture == GESTURE_TAP) {
+                        // Avant : Interaction (Bonjour)
+                        // Maintenant : On affiche l'écran de configuration WiFi/Info
+                        majinUI.setScene(SCENE_SETUP_WIFI); 
+                        majinVoice.playNotification();
                     }
                 }
             }
