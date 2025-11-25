@@ -9,9 +9,8 @@
 #include "SettingsManager.h" 
 #include "UsbManager.h" 
 #include "FaceRenderer.h" 
-#include "CountdownRenderer.h" // ⬅️ NOUVEAU
+#include "CountdownRenderer.h" 
 
-// ... (Enums inchangés) ...
 enum UIScene { SCENE_BOOT, SCENE_FACE, SCENE_MENU, SCENE_APP_TRACKPAD, SCENE_APP_STREAMDECK, SCENE_SETTINGS, SCENE_SETUP_WIFI, SCENE_COUNTDOWN, SCENE_TAMA_MENU };
 enum UIEffect { EFFECT_NONE, EFFECT_SNOW, EFFECT_RAIN, EFFECT_CONFETTI, EFFECT_SAKURA, EFFECT_CLOUDS, EFFECT_SUN };
 struct Particle { float x, y, speedX, speedY, size; uint16_t color; bool active; };
@@ -27,7 +26,6 @@ public:
     void setScene(UIScene scene);
     UIScene getScene(); 
     
-    // ... (Reste des méthodes inchangées) ...
     bool handleMenuClick(int touchX, int touchY);
     TamaAction handleTamagotchiClick(int touchX, int touchY);
     void showNotification(String message, uint32_t color, int durationMs);
@@ -46,7 +44,7 @@ private:
     UsbManager* _usb; 
     
     FaceRenderer _face; 
-    CountdownRenderer _countdown; // ⬅️ NOUVEAU
+    CountdownRenderer _countdown; 
 
     LGFX_Sprite _mainSprite; 
     UIScene _currentScene = SCENE_BOOT;
@@ -64,13 +62,15 @@ private:
     void _initParticles(UIEffect type);
     void _updateParticles();
     void _drawOverlay(); 
+    
+    // ⬅️ NOUVEAU : Widget Météo
+    void _drawWeatherWidget();
 
     // Dessin
     void _drawSceneMenu();
     void _drawAppTrackpad();   
     void _drawAppStreamDeck(); 
     void _drawSetupWifi(); 
-    // ❌ _drawCountdown SUPPRIMÉ (Géré par le renderer)
     void _drawWidgets();      
     void _drawNotification(); 
     void _drawTamaMenu(); 

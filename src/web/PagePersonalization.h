@@ -6,7 +6,8 @@
 
 class PagePersonalization {
 public:
-    static String getHTML(bool showTime, bool showSensors, String lat, String lon, bool weatherEnabled, String bootText, int manualMood) {
+    // ⬅️ NOUVEAU : On ajoute l'argument 'city'
+    static String getHTML(bool showTime, bool showSensors, String lat, String lon, bool weatherEnabled, String city, String bootText, int manualMood) {
         String html = R"rawliteral(<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Personnalisation</title>)rawliteral";
         html += WebTheme::getCommonCSS();
         html += R"rawliteral(</head><body>)rawliteral";
@@ -16,7 +17,6 @@ public:
         <div class="container">
             <h1>Personnalisation</h1>
             
-            <!-- APPARENCE -->
             <div class="card">
                 <h3>🎨 Apparence</h3>
                 
@@ -42,7 +42,6 @@ public:
                 </div>
             </div>
 
-            <!-- AFFICHAGE -->
             <div class="card">
                 <h3>Informations à l'écran</h3>
                 <div class="module-row">
@@ -52,25 +51,37 @@ public:
         html += R"rawliteral(><span class="slider"></span></label></div>
                 </div>
                 <div class="module-row">
-                    <div class="module-info"><h3>🌡️ Capteurs</h3></div>
+                    <div class="module-info"><h3>🌡️ Capteurs Internes</h3></div>
                     <div class="module-controls"><label class="switch"><input type="checkbox" onchange="toggleDisplay('sensors', this.checked)" )rawliteral";
         if (showSensors) html += "checked";
         html += R"rawliteral(><span class="slider"></span></label></div>
                 </div>
             </div>
 
-            <!-- MÉTÉO -->
             <div class="card">
                 <h3>🌦️ Météo (Open-Meteo)</h3>
                 <div class="module-row">
-                    <div class="module-info"><h3>Activer Météo</h3></div>
+                    <div class="module-info"><h3>Activer Widget</h3></div>
                     <div class="module-controls"><label class="switch"><input type="checkbox" id="w_enable" )rawliteral";
         if(weatherEnabled) html += "checked";
         html += R"rawliteral(><span class="slider"></span></label></div>
                 </div>
-                <label>Latitude</label><input type="text" id="w_lat" value=")rawliteral" + lat + R"rawliteral(" placeholder="Ex: 48.8566">
-                <label>Longitude</label><input type="text" id="w_lon" value=")rawliteral" + lon + R"rawliteral(" placeholder="Ex: 2.3522">
-                <button onclick="saveWeather()">Enregistrer Météo</button>
+                
+                <label>Nom de la Ville</label>
+                <input type="text" id="w_city" value=")rawliteral" + city + R"rawliteral(" placeholder="Ex: Biscarrosse">
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                    <div>
+                        <label>Latitude</label>
+                        <input type="text" id="w_lat" value=")rawliteral" + lat + R"rawliteral(" placeholder="Ex: 44.394">
+                    </div>
+                    <div>
+                        <label>Longitude</label>
+                        <input type="text" id="w_lon" value=")rawliteral" + lon + R"rawliteral(" placeholder="Ex: -1.164">
+                    </div>
+                </div>
+                
+                <button onclick="saveWeather()" style="margin-top:15px;">Enregistrer Météo</button>
             </div>
         </div>
         )rawliteral";
@@ -80,10 +91,19 @@ public:
         <script>
             function toggleDisplay(id, state) { fetch('/api/config/display?id=' + id + '&state=' + (state ? '1' : '0'), {method: 'POST'}); }
             function saveBoot() { fetch('/api/config/boot?text=' + encodeURIComponent(document.getElementById('boot_txt').value), {method:'POST'}).then(()=>{alert('Logo Sauvegardé !');}); }
+            
             function saveWeather() { 
-                var p = '?lat='+document.getElementById('w_lat').value+'&lon='+document.getElementById('w_lon').value+'&enable='+(document.getElementById('w_enable').checked?'1':'0');
-                fetch('/api/config/weather'+p, {method:'POST'}).then(()=>{alert('Météo Sauvée !');});
+                var lat = document.getElementById('w_lat').value;
+                var lon = document.getElementById('w_lon').value;
+                var city = encodeURIComponent(document.getElementById('w_city').value);
+                var enable = document.getElementById('w_enable').checked ? '1' : '0';
+                
+                var p = '?lat=' + lat + '&lon=' + lon + '&city=' + city + '&enable=' + enable;
+                
+                fetch('/api/config/weather' + p, {method:'POST'})
+                    .then(() => { alert('Météo Sauvée !'); location.reload(); });
             }
+
             function saveMood(val) {
                 fetch('/api/config/mood?val=' + val, {method:'POST'}).then(()=>{console.log('Mood forced to '+val);});
             }

@@ -20,9 +20,11 @@ void SettingsManager::_loadCache() {
     _cache_weatherEnabled = _prefs.getBool("w_en", false);
     _cache_lat = _prefs.getString("w_lat", "48.8566");
     _cache_lon = _prefs.getString("w_lon", "2.3522");
-    _cache_bootText = _prefs.getString("boot_txt", "MAJIN OS");
     
-    // ⬅️ Chargement Mood (-1 par défaut si non existant)
+    // ⬅️ NOUVEAU : Chargement Ville
+    _cache_city = _prefs.getString("w_city", "Paris");
+
+    _cache_bootText = _prefs.getString("boot_txt", "MAJIN OS");
     _cache_manualMood = _prefs.getInt("man_mood", -1);
 
     if (_prefs.isKey("deck_data") && _prefs.getBytesLength("deck_data") == sizeof(_cache_deck)) {
@@ -51,14 +53,8 @@ bool SettingsManager::getShowTime() { return _cache_showTime; }
 void SettingsManager::setShowSensors(bool show) { _cache_showSensors = show; _prefs.putBool("show_sensors", show); }
 bool SettingsManager::getShowSensors() { return _cache_showSensors; }
 
-// ⬅️ MANUAL MOOD
-void SettingsManager::setManualMood(int moodId) { 
-    _cache_manualMood = moodId; 
-    _prefs.putInt("man_mood", moodId); 
-}
-int SettingsManager::getManualMood() { 
-    return _cache_manualMood; 
-}
+void SettingsManager::setManualMood(int moodId) { _cache_manualMood = moodId; _prefs.putInt("man_mood", moodId); }
+int SettingsManager::getManualMood() { return _cache_manualMood; }
 
 void SettingsManager::setWeatherLat(String lat) { _cache_lat = lat; _prefs.putString("w_lat", lat); }
 String SettingsManager::getWeatherLat() { return _cache_lat; }
@@ -66,6 +62,11 @@ void SettingsManager::setWeatherLon(String lon) { _cache_lon = lon; _prefs.putSt
 String SettingsManager::getWeatherLon() { return _cache_lon; }
 void SettingsManager::setWeatherEnabled(bool enabled) { _cache_weatherEnabled = enabled; _prefs.putBool("w_en", enabled); }
 bool SettingsManager::getWeatherEnabled() { return _cache_weatherEnabled; }
+
+// ⬅️ NOUVEAU : Setter Ville
+void SettingsManager::setCityName(String city) { _cache_city = city; _prefs.putString("w_city", city); }
+String SettingsManager::getCityName() { return _cache_city; }
+
 void SettingsManager::setServoEnabled(bool enabled) { _cache_servoEnabled = enabled; _prefs.putBool("srv_en", enabled); }
 bool SettingsManager::getServoEnabled() { return _cache_servoEnabled; }
 void SettingsManager::setBuzzerEnabled(bool enabled) { _cache_buzzerEnabled = enabled; _prefs.putBool("buz_en", enabled); }

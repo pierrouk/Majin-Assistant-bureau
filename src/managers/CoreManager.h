@@ -29,27 +29,28 @@ public:
     void setMood(MoodState newMood);
     MoodState getMood();
     
-    // --- Capteurs ---
+    // --- Capteurs Internes ---
     void setSensorData(float temp, float hum, float lux);
     float getTemp();
     float getHum();
     float getLux();
+
+    // ⬅️ NOUVEAU : Météo Externe
+    void setExternalWeather(int code, float temp);
+    int getExternalWeatherCode();
+    float getExternalTemp();
 
     // --- Actions Tamagotchi ---
     void feed(int amount); 
     void play(int amount); 
     void sleep(bool force); 
     void wakeUp();
-    
-    // 🛠️ CORRECTIF : Nouvelle méthode pour le reset total
     void resetLife();
 
     // --- Getters Jauges ---
     int getEnergy();
     int getHunger();
     int getFun();
-    
-    // Ajout helper pour changer l'énergie manuellement si besoin
     void changeEnergy(int delta);
 
     uint16_t getGlobalColor(); 
@@ -59,6 +60,10 @@ private:
     MoodState _currentMood = MOOD_NEUTRAL;
     
     float _temp = 0.0f; float _hum = 0.0f; float _lux = 0.0f;
+
+    // ⬅️ NOUVEAU : Variables Météo Externe
+    int _extWeatherCode = -1; 
+    float _extTemp = 0.0f;
 
     float _energy = 100; 
     float _hunger = 0;   

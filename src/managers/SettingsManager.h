@@ -33,7 +33,7 @@ public:
     void setShowTime(bool show); bool getShowTime();
     void setShowSensors(bool show); bool getShowSensors();
     
-    // ⬅️ NOUVEAU : Forçage de l'expression (-1 = Auto)
+    // Forçage de l'expression (-1 = Auto)
     void setManualMood(int moodId); 
     int getManualMood();
 
@@ -41,6 +41,9 @@ public:
     void setWeatherLat(String lat); String getWeatherLat();
     void setWeatherLon(String lon); String getWeatherLon();
     void setWeatherEnabled(bool enabled); bool getWeatherEnabled();
+    
+    // ⬅️ NOUVEAU : Ville
+    void setCityName(String city); String getCityName();
 
     // --- Hardware ---
     void setServoEnabled(bool enabled); bool getServoEnabled();
@@ -73,9 +76,12 @@ private:
     String _cache_name = "Majin Bot";
     String _cache_lat = "48.8566"; 
     String _cache_lon = "2.3522";
+    
+    // ⬅️ NOUVEAU : Cache Ville
+    String _cache_city = "Paris";
+
     String _cache_bootText = "MAJIN OS";
     
-    // ⬅️ Cache Mood
     int _cache_manualMood = -1; // -1 = Auto
 
     DeckButton _cache_deck[DECK_TOTAL_BTNS];

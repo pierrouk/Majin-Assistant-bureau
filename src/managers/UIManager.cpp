@@ -1,7 +1,6 @@
 #include "UIManager.h"
 #include "../../include/Theme.h" 
 
-// 🛠️ CORRECTIF : Constructeur nettoyé (plus de _pixelSprite)
 UIManager::UIManager() : _mainSprite(nullptr) {
 }
 
@@ -11,9 +10,8 @@ void UIManager::begin(DisplayDriver* display, CoreManager* core, NetworkManager*
     _mainSprite.setPsram(true); _mainSprite.setColorDepth(16); _mainSprite.createSprite(320, 240);
     _mainSprite.setFont(FONT_UI);
 
-    // Init Renderers
     _face.begin(core, settings);
-    _countdown.begin(core, settings); // ⬅️ Init
+    _countdown.begin(core, settings); 
 
     _initApps();
     _currentScene = SCENE_FACE; 
@@ -128,7 +126,6 @@ void UIManager::prevDeckPage() { _currentDeckPage--; if (_currentDeckPage < 0) _
 void UIManager::update() {
     _updateParticles();
 
-    // 🛠️ CORRECTIF : On délègue la mise à jour du visage au FaceRenderer
     if (_currentScene == SCENE_FACE || _currentScene == SCENE_SETUP_WIFI) {
         _face.update();
     }
@@ -143,10 +140,7 @@ void UIManager::draw() {
 
     switch (_currentScene) {
         case SCENE_FACE: _face.draw(&_mainSprite); break;
-        
-        // ⚠️ DÉLÉGATION
         case SCENE_COUNTDOWN: _countdown.draw(&_mainSprite); break;
-        
         case SCENE_MENU: _drawSceneMenu(); break;
         case SCENE_APP_TRACKPAD: _drawAppTrackpad(); break;     
         case SCENE_APP_STREAMDECK: _drawAppStreamDeck(); break;
@@ -156,12 +150,18 @@ void UIManager::draw() {
         default: break;
     }
     
-    // ... (Overlay et Notifications inchangés) ...
-    if (_currentScene == SCENE_FACE || _currentScene == SCENE_COUNTDOWN) {
+    // ⬅️ NOUVEAU : Overlay SEULEMENT si Countdown
+    if (_currentScene == SCENE_COUNTDOWN) {
         _drawOverlay();
     }
 
     if (_currentScene != SCENE_COUNTDOWN) _drawWidgets();
+    
+    // ⬅️ NOUVEAU : Dessin Widget Météo (Bas Gauche)
+    if (_currentScene == SCENE_FACE && _settings->getWeatherEnabled()) {
+        _drawWeatherWidget();
+    }
+
     if (_notifMsg != "") _drawNotification();
     if (_usb->isJigglerActive() && _currentScene == SCENE_FACE) _drawMouseStatus();
 
@@ -191,36 +191,20 @@ void UIManager::_drawAppStreamDeck() {
         if (btn.active) {
             _mainSprite.fillRoundRect(x, y, btnW, btnH, 8, btn.color);
             _mainSprite.drawRoundRect(x, y, btnW, btnH, 8, COLOR_WHITE);
-            
             if (btn.iconID > 0) {
                 _drawDeckIcon(&_mainSprite, btn.iconID, x + btnW/2, y + btnH/2 - 5, COLOR_BLACK);
-                _mainSprite.setTextDatum(bottom_center);
-                _mainSprite.setTextColor(COLOR_BLACK);
-                _mainSprite.setFont(FONT_SMALL); 
-                _mainSprite.drawString(btn.label, x + btnW/2, y + btnH - 5);
+                _mainSprite.setTextDatum(bottom_center); _mainSprite.setTextColor(COLOR_BLACK); _mainSprite.setFont(FONT_SMALL); _mainSprite.drawString(btn.label, x + btnW/2, y + btnH - 5);
             } else {
-                _mainSprite.setTextDatum(middle_center);
-                _mainSprite.setTextColor(COLOR_BLACK);
-                _mainSprite.setFont(FONT_UI); 
-                _mainSprite.drawString(btn.label, x + btnW/2, y + btnH/2);
+                _mainSprite.setTextDatum(middle_center); _mainSprite.setTextColor(COLOR_BLACK); _mainSprite.setFont(FONT_UI); _mainSprite.drawString(btn.label, x + btnW/2, y + btnH/2);
             }
         } else {
             _mainSprite.drawRoundRect(x, y, btnW, btnH, 8, 0x3333); 
-            _mainSprite.setTextColor(0x5555);
-            _mainSprite.setTextDatum(middle_center);
-            _mainSprite.drawString("+", x + btnW/2, y + btnH/2);
+            _mainSprite.setTextColor(0x5555); _mainSprite.setTextDatum(middle_center); _mainSprite.drawString("+", x + btnW/2, y + btnH/2);
         }
     }
-    
     int dotY = 200;
-    for(int p=0; p<4; p++) {
-        uint16_t color = (p == _currentDeckPage) ? COLOR_PRIMARY : 0x3333;
-        _mainSprite.fillCircle(160 - 30 + (p*20), dotY, 4, color);
-    }
-    _mainSprite.setFont(FONT_SMALL); 
-    _mainSprite.setTextColor(0xCE79);
-    _mainSprite.setTextDatum(bottom_center); 
-    _mainSprite.drawString("Swipe < >", 160, 230); 
+    for(int p=0; p<4; p++) { uint16_t color = (p == _currentDeckPage) ? COLOR_PRIMARY : 0x3333; _mainSprite.fillCircle(160 - 30 + (p*20), dotY, 4, color); }
+    _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(0xCE79); _mainSprite.setTextDatum(bottom_center); _mainSprite.drawString("Swipe < >", 160, 230); 
 }
 
 void UIManager::_drawMouseStatus() { int x = 20; int y = 220; _mainSprite.fillRoundRect(x, y, 16, 22, 6, COLOR_PRIMARY); _mainSprite.drawLine(x+8, y, x+8, y+10, COLOR_BG); _mainSprite.fillRect(x+6, y+4, 4, 6, COLOR_BG); _mainSprite.drawArc(x+20, y, 6, 5, 30, 150, COLOR_PRIMARY); }
@@ -231,21 +215,18 @@ void UIManager::_drawTamaMenu() {
     int btnY = 140; int barY = 85; int barW = 50; int barH = 6; 
     _mainSprite.setFont(FONT_SMALL); 
     
-    // Faim
     int hunger = _core->getHunger(); int satFill = map(100 - hunger, 0, 100, 0, barW); 
     _mainSprite.setTextColor(0xE463); _mainSprite.drawString("Faim", 60, barY - 15); 
     _mainSprite.drawRect(60 - barW/2 - 1, barY - 1, barW + 2, barH + 2, COLOR_WHITE); _mainSprite.fillRect(60 - barW/2, barY, barW, barH, 0x2124); _mainSprite.fillRect(60 - barW/2, barY, satFill, barH, 0xE463); 
     _mainSprite.fillCircle(60, btnY, 35, 0xE463); _mainSprite.setFont(FONT_UI); _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(middle_center); _mainSprite.drawString("Snack", 60, btnY + 50); 
     int bx = 50; int by = btnY - 5; _mainSprite.fillRoundRect(bx, by, 20, 4, 2, 0xA145); _mainSprite.fillRect(bx, by+5, 20, 2, 0x2580); _mainSprite.fillRect(bx, by+8, 20, 3, 0x7000); _mainSprite.fillRoundRect(bx, by+12, 20, 4, 2, 0xA145); 
 
-    // Energie
     int energy = _core->getEnergy(); int nrgFill = map(energy, 0, 100, 0, barW); uint16_t nrgCol = (energy < 30) ? COLOR_DANGER : COLOR_SUCCESS; 
     _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(nrgCol); _mainSprite.setTextDatum(top_center); _mainSprite.drawString("Energie", 160, barY - 15); 
     _mainSprite.drawRect(160 - barW/2 - 1, barY - 1, barW + 2, barH + 2, COLOR_WHITE); _mainSprite.fillRect(160 - barW/2, barY, barW, barH, 0x2124); _mainSprite.fillRect(160 - barW/2, barY, nrgFill, barH, nrgCol); 
     uint16_t sleepCol = (_core->getMood() == MOOD_SLEEP) ? COLOR_SUCCESS : COLOR_PRIMARY; 
     _mainSprite.fillCircle(160, btnY, 35, sleepCol); _mainSprite.setFont(FONT_UI); _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(middle_center); _mainSprite.drawString("Dodo", 160, btnY + 50); _mainSprite.drawString("Zzz", 160, btnY); 
 
-    // Fun
     int fun = _core->getFun(); int funFill = map(fun, 0, 100, 0, barW); 
     _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(COLOR_ACCENT); _mainSprite.setTextDatum(top_center); _mainSprite.drawString("Fun", 260, barY - 15); 
     _mainSprite.drawRect(260 - barW/2 - 1, barY - 1, barW + 2, barH + 2, COLOR_WHITE); _mainSprite.fillRect(260 - barW/2, barY, barW, barH, 0x2124); _mainSprite.fillRect(260 - barW/2, barY, funFill, barH, COLOR_ACCENT); 
@@ -256,62 +237,20 @@ void UIManager::_drawTamaMenu() {
 
 void UIManager::_drawSetupWifi() { 
     _mainSprite.fillScreen(COLOR_UI_BG); 
-    
     if (_settings->isSetupDone()) {
-        // --- CAS 1 : ROBOT CONNECTÉ (Mode Infos) ---
-        // On affiche l'IP et le réseau pour info
-        
-        _mainSprite.setTextColor(COLOR_WHITE); 
-        _mainSprite.setTextDatum(top_center); 
-        _mainSprite.setFont(FONT_TITLE); 
-        _mainSprite.drawString("INFOS RESEAU", 160, 20); 
-
-        // Cadre stylé
+        _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(top_center); _mainSprite.setFont(FONT_TITLE); _mainSprite.drawString("INFOS RESEAU", 160, 20); 
         _mainSprite.drawRoundRect(20, 60, 280, 100, 8, COLOR_PRIMARY);
-        
-        _mainSprite.setFont(FONT_UI);
-        _mainSprite.setTextDatum(middle_center);
-        
-        // Récupération dynamique du SSID (Nom du WiFi) et de l'IP
-        String ssid = WiFi.SSID();
-        String ip = _net->getIP();
-        
-        // Affichage
-        _mainSprite.setTextColor(COLOR_ACCENT);
-        _mainSprite.drawString("WiFi: " + ssid, 160, 90);
-        
-        _mainSprite.setTextColor(COLOR_SUCCESS);
-        _mainSprite.drawString("IP: " + ip, 160, 120);
-        
-        // Instructions de sortie
-        _mainSprite.setFont(FONT_SMALL);
-        _mainSprite.setTextColor(0xCE79);
-        _mainSprite.setTextDatum(bottom_center);
-        _mainSprite.drawString("Swipe ou Tap pour fermer", 160, 220);
-        
+        _mainSprite.setFont(FONT_UI); _mainSprite.setTextDatum(middle_center);
+        String ssid = WiFi.SSID(); String ip = _net->getIP();
+        _mainSprite.setTextColor(COLOR_ACCENT); _mainSprite.drawString("WiFi: " + ssid, 160, 90);
+        _mainSprite.setTextColor(COLOR_SUCCESS); _mainSprite.drawString("IP: " + ip, 160, 120);
+        _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(0xCE79); _mainSprite.setTextDatum(bottom_center); _mainSprite.drawString("Swipe ou Tap pour fermer", 160, 220);
     } else {
-        // --- CAS 2 : ROBOT NON CONFIGURÉ (Mode AP) ---
-        // Instructions de configuration d'origine
-        
-        _mainSprite.fillRoundRect(160 - 20, 60, 15, 40, 5, COLOR_WHITE); 
-        _mainSprite.fillRoundRect(160 + 5, 60, 15, 40, 5, COLOR_WHITE); 
-        
-        _mainSprite.setTextColor(COLOR_WHITE); 
-        _mainSprite.setTextDatum(top_center); 
-        _mainSprite.setFont(FONT_TITLE); 
-        _mainSprite.drawString("CONFIGURATION", 160, 110); 
-        
-        _mainSprite.setFont(FONT_SMALL); 
-        _mainSprite.setTextColor(COLOR_PRIMARY); 
-        _mainSprite.drawString("1. Connectez-vous au WiFi:", 160, 150); 
-        
-        _mainSprite.setFont(FONT_TITLE); 
-        _mainSprite.setTextColor(COLOR_ACCENT); 
-        _mainSprite.drawString("Majin_Setup", 160, 175); 
-        
-        _mainSprite.setFont(FONT_SMALL); 
-        _mainSprite.setTextColor(COLOR_WHITE); 
-        _mainSprite.drawString("2. Configurez le réseau", 160, 210); 
+        _mainSprite.fillRoundRect(160 - 20, 60, 15, 40, 5, COLOR_WHITE); _mainSprite.fillRoundRect(160 + 5, 60, 15, 40, 5, COLOR_WHITE); 
+        _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(top_center); _mainSprite.setFont(FONT_TITLE); _mainSprite.drawString("CONFIGURATION", 160, 110); 
+        _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(COLOR_PRIMARY); _mainSprite.drawString("1. Connectez-vous au WiFi:", 160, 150); 
+        _mainSprite.setFont(FONT_TITLE); _mainSprite.setTextColor(COLOR_ACCENT); _mainSprite.drawString("Majin_Setup", 160, 175); 
+        _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.drawString("2. Configurez le réseau", 160, 210); 
     }
 }
 
@@ -347,8 +286,47 @@ void UIManager::_drawNotification() {
     _mainSprite.setFont(FONT_TITLE); _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(middle_center); _mainSprite.drawString(_notifMsg, 160, 25); 
 }
 
-
-
 void UIManager::setScene(UIScene scene) { if (scene == SCENE_COUNTDOWN) { int type = _settings->getEventType(); switch(type) { case 0: setEffect(EFFECT_NONE); break; case 1: setEffect(EFFECT_CONFETTI); break; case 2: setEffect(EFFECT_SNOW); break; case 3: setEffect(EFFECT_SAKURA); break; default: setEffect(EFFECT_NONE); break; } } else { setEffect(_weatherEffect); } _currentScene = scene; if (scene == SCENE_COUNTDOWN) { _sceneStartTime = millis(); } }
 UIScene UIManager::getScene() { return _currentScene; }
 void UIManager::showNotification(String message, uint32_t color, int durationMs) { _notifMsg = message; _notifColor = color; _notifDuration = durationMs; _notifStartTime = millis(); }
+
+// ⬅️ NOUVEAU : Implementation Widget
+void UIManager::_drawWeatherWidget() {
+    int x = 10; int y = 200; 
+    int code = _core->getExternalWeatherCode();
+    float temp = _core->getExternalTemp();
+    String city = _settings->getCityName();
+
+    if (code == -1) return;
+
+    _mainSprite.setTextDatum(top_left);
+    uint16_t iconColor = COLOR_WHITE;
+    
+    if (code == 0) {
+        iconColor = 0xFFE0; 
+        _mainSprite.fillCircle(x + 15, y + 15, 8, iconColor);
+        for(int i=0; i<8; i++) { float a = i * (PI/4); _mainSprite.drawLine(x+15, y+15, x+15+cos(a)*14, y+15+sin(a)*14, iconColor); }
+    }
+    else if (code <= 48) {
+        iconColor = 0xCE79; 
+        _mainSprite.fillCircle(x + 10, y + 18, 8, iconColor); _mainSprite.fillCircle(x + 20, y + 15, 10, iconColor); _mainSprite.fillCircle(x + 28, y + 18, 8, iconColor);
+    }
+    else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+        iconColor = 0x001F; 
+        _mainSprite.fillCircle(x + 15, y + 12, 10, 0xCE79); _mainSprite.fillCircle(x + 25, y + 12, 8, 0xCE79);
+        _mainSprite.drawLine(x+10, y+22, x+8, y+28, COLOR_PRIMARY); _mainSprite.drawLine(x+18, y+22, x+16, y+28, COLOR_PRIMARY); _mainSprite.drawLine(x+26, y+22, x+24, y+28, COLOR_PRIMARY);
+    }
+    else if (code >= 71 && code <= 86) {
+        iconColor = COLOR_WHITE;
+        _mainSprite.fillCircle(x + 15, y + 12, 10, 0xCE79); 
+        _mainSprite.fillCircle(x + 10, y + 26, 2, COLOR_WHITE); _mainSprite.fillCircle(x + 20, y + 24, 2, COLOR_WHITE); _mainSprite.fillCircle(x + 30, y + 26, 2, COLOR_WHITE);
+    }
+    else if (code >= 95) {
+        _mainSprite.fillCircle(x + 15, y + 12, 10, 0x7BEF); 
+        _mainSprite.fillTriangle(x+15, y+20, x+10, y+30, x+20, y+28, 0xFFE0);
+    }
+
+    int textX = x + 40; 
+    _mainSprite.setFont(FONT_UI); _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setTextDatum(bottom_left); _mainSprite.drawString(String(temp, 1) + "C", textX, y + 18);
+    _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(0xCE79); _mainSprite.setTextDatum(top_left); _mainSprite.drawString(city, textX, y + 20);
+}
