@@ -1,4 +1,5 @@
 #include "NetworkManager.h"
+#include <Update.h> // ⬅️ INDISPENSABLE POUR OTA
 
 NetworkManager::NetworkManager() : _server(80) {
 }
@@ -57,9 +58,9 @@ void NetworkManager::onTriggerMood(IntCallback cb)  { _moodCallback = cb; }
 void NetworkManager::onWeatherUpdate(WeatherCallback cb) { _weatherCallback = cb; }
 
 void NetworkManager::fetchWeather() {
-    // Si désactivé, on ne fetch pas. L'UI le cachera grâce au settings->getWeatherEnabled()
     if (!_settings->getWeatherEnabled()) {
         Serial.println("🚫 [Network]: Météo désactivée");
+        if (_weatherCallback) _weatherCallback(-1);
         return;
     }
 
@@ -107,17 +108,15 @@ void NetworkManager::setupWebServer() {
 
     _server.on("/settings", HTTP_GET, [this](AsyncWebServerRequest *request){ request->send(200, "text/html", PageSettings::getHTML()); });
 
-    // 🛠️ MISE À JOUR : Route Perso avec City
     _server.on("/perso", HTTP_GET, [this](AsyncWebServerRequest *request){
         bool t = _settings->getShowTime();
         bool s = _settings->getShowSensors();
         String lat = _settings->getWeatherLat();
         String lon = _settings->getWeatherLon();
         bool en = _settings->getWeatherEnabled();
-        String city = _settings->getCityName(); // Récup Ville
+        String city = _settings->getCityName();
         String boot = _settings->getBootLogoText();
         int mood = _settings->getManualMood();
-        // Passage de 'city' à la page
         request->send(200, "text/html", PagePersonalization::getHTML(t, s, lat, lon, en, city, boot, mood));
     });
 
@@ -175,29 +174,20 @@ void NetworkManager::setupWebServer() {
     _server.on("/api/module/test", HTTP_POST, [this](AsyncWebServerRequest *request){
         if (request->hasParam("id")) {
             String id = request->getParam("id")->value();
-            if (id == "buzzer") { _sound->testSequence(); } 
+            if (id == "buzzer") { } 
             else if (id == "servo") { _servo->testSequence(); }
             request->send(200, "text/plain", "Test OK");
         } else { request->send(400); }
     });
 
-    // 🛠️ MISE À JOUR : Gestion Paramètre Ville + Enable
     _server.on("/api/config/weather", HTTP_POST, [this](AsyncWebServerRequest *request){
         if (request->hasParam("lat")) {
             _settings->setWeatherLat(request->getParam("lat")->value());
             _settings->setWeatherLon(request->getParam("lon")->value());
-            
-            if (request->hasParam("city")) {
-                _settings->setCityName(request->getParam("city")->value());
-            }
-
+            if (request->hasParam("city")) _settings->setCityName(request->getParam("city")->value());
             bool enable = (request->getParam("enable")->value() == "1");
             _settings->setWeatherEnabled(enable);
-
-            if (enable) {
-                fetchWeather(); // Mise à jour immédiate si activé
-            }
-            
+            if (enable) fetchWeather(); 
             request->send(200, "text/plain", "OK");
         } else { request->send(400); }
     });
@@ -277,6 +267,39 @@ void NetworkManager::setupWebServer() {
 
     _server.on("/api/wifi/reset", HTTP_POST, [this](AsyncWebServerRequest *request){ request->send(200); delay(500); resetWiFi(); ESP.restart(); });
     _server.on("/api/reset", HTTP_POST, [this](AsyncWebServerRequest *request){ request->send(200); delay(500); resetWiFi(); _settings->factoryReset(); ESP.restart(); });
+
+    // ⬅️ NOUVEAU : Route de mise à jour OTA
+    _server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
+        bool shouldReboot = !Update.hasError();
+        AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot ? "OK" : "FAIL");
+        response->addHeader("Connection", "close");
+        request->send(response);
+        if(shouldReboot) {
+            Serial.println("OTA: Succès ! Redémarrage...");
+            delay(100);
+            ESP.restart();
+        }
+    }, [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
+        if(!index){
+            Serial.printf("OTA: Début mise à jour: %s\n", filename.c_str());
+            // Si pas assez de place pour OTA (taille max approx partition app)
+            if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
+                Update.printError(Serial);
+            }
+        }
+        if(!Update.hasError()){
+            if(Update.write(data, len) != len){
+                Update.printError(Serial);
+            }
+        }
+        if(final){
+            if(Update.end(true)){
+                Serial.printf("OTA: Fin. Taille: %uB\n", index+len);
+            } else {
+                Update.printError(Serial);
+            }
+        }
+    });
 
     _server.begin();
     Serial.println("🌐 [Network]: Serveur Web démarré");
