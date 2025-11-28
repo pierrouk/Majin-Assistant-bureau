@@ -28,6 +28,6 @@
 // --- 🤖 PÉRIPHÉRIQUES ---
 #define SERVO_PIN        42
 #define TOUCH_BUTTON_PIN 13
-#define BUZZER_PIN       41
+#define BUZZER_PIN       21
 
 #endif // PINS_H

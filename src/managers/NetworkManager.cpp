@@ -175,7 +175,7 @@ void NetworkManager::setupWebServer() {
     _server.on("/api/module/test", HTTP_POST, [this](AsyncWebServerRequest *request){
         if (request->hasParam("id")) {
             String id = request->getParam("id")->value();
-            if (id == "buzzer") { } 
+            if (id == "buzzer") { _sound->testSequence(); } 
             else if (id == "servo") { _servo->testSequence(); }
             request->send(200, "text/plain", "Test OK");
         } else { request->send(400); }

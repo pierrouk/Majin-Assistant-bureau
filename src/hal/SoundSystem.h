@@ -31,6 +31,8 @@ public:
 
     bool isPlaying(); 
 
+    void testSequence();
+
 private:
     const int PWM_CHANNEL = 6; 
     const int RESOLUTION = 8;

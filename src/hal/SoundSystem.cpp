@@ -140,3 +140,15 @@ void SoundSystem::playError() {
     tone(0, 1);
     _enqueue(400, 200); _enqueue(0, 50); _enqueue(300, 400);
 }
+void SoundSystem::testSequence() {
+    if (!_enabled) return;
+    tone(0, 1);
+    _enqueue(262, 200); // C4
+    _enqueue(294, 200); // D4
+    _enqueue(330, 200); // E4
+    _enqueue(349, 200); // F4
+    _enqueue(392, 200); // G4
+    _enqueue(440, 200); // A4
+    _enqueue(494, 200); // B4
+    _enqueue(523, 400); // C5
+}
