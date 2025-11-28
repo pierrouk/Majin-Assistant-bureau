@@ -44,7 +44,7 @@ public:
     static String getNavBar(String activePage) {
         String html = R"rawliteral(
 <nav class="navbar">
-  <a href="/" class="nav-brand"><span>🤖</span> MAJIN</a>
+  <a href="/" class="nav-brand"><span>🤖</span> MAJIN OS V1</a>
   <div class="nav-links">
     <a href="/" class=")rawliteral"; html += (activePage == "home") ? "active" : ""; html += R"rawliteral(">Dash</a>
     <a href="/tamagotchi" class=")rawliteral"; html += (activePage == "tamagotchi") ? "active" : ""; html += R"rawliteral(">Vie</a>
