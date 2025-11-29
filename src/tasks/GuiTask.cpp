@@ -24,6 +24,13 @@ void TaskGUI(void *pvParameters) {
     while (true) {
         // 1. ACQUISITION
         isTouched = majinScreen.getTouchSafe(&touchX, &touchY);
+        // ⬅️ FEEDBACK HAPTIQUE
+        // Si on vient de toucher l'écran (Front montant), on fait un petit clic
+        static bool wasTouched = false;
+        if (isTouched && !wasTouched) {
+            majinHaptic.click(); 
+        }
+        wasTouched = isTouched;
         GestureType gesture = majinInput.process(isTouched, touchX, touchY);
         UIScene currentScene = majinUI.getScene();
 

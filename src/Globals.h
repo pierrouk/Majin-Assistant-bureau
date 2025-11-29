@@ -13,6 +13,7 @@
 #include "hal/SoundSystem.h"
 #include "hal/DisplayDriver.h"
 #include "hal/EnvironmentSensor.h" 
+#include "hal/HapticDriver.h" // ⬅️ Include
 
 #include "managers/NetworkManager.h"
 #include "managers/CoreManager.h"
@@ -37,6 +38,7 @@ extern TouchSensor       majinTouch;
 extern SoundSystem       majinVoice;
 extern DisplayDriver     majinScreen;
 extern EnvironmentSensor majinEnv; 
+extern HapticDriver majinHaptic; // ⬅️ Déclaration
 
 extern NetworkManager    majinNet;
 extern CoreManager       majinCore;
