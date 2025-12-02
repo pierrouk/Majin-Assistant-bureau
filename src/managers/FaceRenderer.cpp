@@ -72,23 +72,35 @@ void FaceRenderer::draw(LGFX_Sprite* mainSprite) {
     // Oeil Gauche
     ctx.x = cx - EYE_SPACING - ctx.w/2; ctx.y = cy - 10; ctx.isLeft = true;
     switch(mood) {
-        case MOOD_HAPPY: FaceHappy::draw(mainSprite, ctx); break;
-        case MOOD_ANGRY: FaceAngry::draw(mainSprite, ctx); break;
-        case MOOD_SAD:   FaceSad::draw(mainSprite, ctx); break;
-        case MOOD_SLEEP: FaceSleep::draw(mainSprite, ctx); break;
-        case MOOD_LOVE:  FaceLove::draw(mainSprite, ctx); break;
-        default:         FaceNormal::draw(mainSprite, ctx); break;
+        case MOOD_HAPPY:  FaceHappy::draw(mainSprite, ctx); break;
+        case MOOD_ANGRY:  FaceAngry::draw(mainSprite, ctx); break;
+        case MOOD_SAD:    FaceSad::draw(mainSprite, ctx); break;
+        case MOOD_SLEEP:  FaceSleep::draw(mainSprite, ctx); break;
+        case MOOD_LOVE:   FaceLove::draw(mainSprite, ctx); break;
+        
+        // MAPPING DES ÉTATS MANQUANTS
+        case MOOD_HUNGRY: FaceAngry::draw(mainSprite, ctx); break; // Faim = Grincheux
+        case MOOD_TIRED:  FaceSad::draw(mainSprite, ctx); break;   // Fatigué = Triste/Lourd
+        case MOOD_BORED:  FaceNormal::draw(mainSprite, ctx); break; // Ennui = Normal
+        
+        default:          FaceNormal::draw(mainSprite, ctx); break;
     }
 
     // Oeil Droit
     ctx.x = cx + EYE_SPACING + ctx.w/2; ctx.isLeft = false;
     switch(mood) {
-        case MOOD_HAPPY: FaceHappy::draw(mainSprite, ctx); break;
-        case MOOD_ANGRY: FaceAngry::draw(mainSprite, ctx); break;
-        case MOOD_SAD:   FaceSad::draw(mainSprite, ctx); break;
-        case MOOD_SLEEP: FaceSleep::draw(mainSprite, ctx); break;
-        case MOOD_LOVE:  FaceLove::draw(mainSprite, ctx); break;
-        default:         FaceNormal::draw(mainSprite, ctx); break;
+        case MOOD_HAPPY:  FaceHappy::draw(mainSprite, ctx); break;
+        case MOOD_ANGRY:  FaceAngry::draw(mainSprite, ctx); break;
+        case MOOD_SAD:    FaceSad::draw(mainSprite, ctx); break;
+        case MOOD_SLEEP:  FaceSleep::draw(mainSprite, ctx); break;
+        case MOOD_LOVE:   FaceLove::draw(mainSprite, ctx); break;
+        
+        // MAPPING IDENTIQUE
+        case MOOD_HUNGRY: FaceAngry::draw(mainSprite, ctx); break;
+        case MOOD_TIRED:  FaceSad::draw(mainSprite, ctx); break;
+        case MOOD_BORED:  FaceNormal::draw(mainSprite, ctx); break;
+        
+        default:          FaceNormal::draw(mainSprite, ctx); break;
     }
 
     _drawRobotMouth(mainSprite, cx, cy + 40, mood);
@@ -124,14 +136,30 @@ void FaceRenderer::_drawRobotMouth(LGFX_Sprite* spr, int cx, int cy, MoodState m
     uint16_t color = TFT_WHITE;
     switch (mood) {
         case MOOD_HAPPY: spr->fillArc(cx, cy - 10, 25, 22, 45, 135, color); break;
-        case MOOD_ANGRY: spr->fillRect(cx - 10, cy, 20, 4, TFT_RED); break;
+        case MOOD_ANGRY: spr->fillRect(cx - 10, cy, 20, 4, TFT_RED); break; // Bouche rouge colère
         case MOOD_SAD:   spr->fillArc(cx, cy + 10, 25, 22, 225, 315, color); break;
         case MOOD_SLEEP: spr->drawCircle(cx, cy, 5, color); break;
         case MOOD_LOVE:  spr->fillArc(cx, cy - 5, 15, 12, 45, 135, color); break;
+        
+        // NOUVEAUX CAS
+        case MOOD_HUNGRY: 
+            // Bouche ouverte carrée (veut manger)
+            spr->drawRect(cx - 10, cy - 5, 20, 15, color); 
+            break;
+            
+        case MOOD_TIRED:
+            // Petite ligne basse
+            spr->fillRect(cx - 15, cy + 5, 30, 2, color);
+            break;
+            
+        case MOOD_BORED:
+            // Petite ligne décalée
+            spr->fillRect(cx - 15, cy, 30, 2, color);
+            break;
+
         default:         spr->fillArc(cx, cy - 5, 20, 17, 60, 120, color); break;
     }
 }
-
 void FaceRenderer::_drawBubbles(LGFX_Sprite* spr, int cx, int topY) {
     if (_core->getHunger() > 80) _drawHungerBubble(spr, cx + 60, topY);
     if (_core->getEnergy() < 20 || _core->getMood() == MOOD_SLEEP) _drawSleepBubble(spr, cx - 60, topY);

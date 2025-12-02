@@ -42,7 +42,9 @@ private:
     NetworkManager* _net;
     SettingsManager* _settings; 
     UsbManager* _usb; 
-    
+    // 🕸️ MENU HEXAGONAL (Variables)
+    float _menuScrollCurrent = 0.0; // Position actuelle (animation fluide)
+    int   _menuScrollTarget = 0;    // Index de l'app ciblée (0, 1, 2...)
     FaceRenderer _face; 
     CountdownRenderer _countdown; 
 
@@ -61,17 +63,27 @@ private:
     const int MAX_PARTICLES = 60; 
     void _initParticles(UIEffect type);
     void _updateParticles();
-    void _drawOverlay(); 
+    void _drawParticles(); // Renommé pour clarté
     
-    // ⬅️ NOUVEAU : Widget Météo
-    void _drawWeatherWidget();
+    // 🎨 OVERLAY UNIFIÉ (HUD)
+    void _drawUnifiedOverlay(); // Remplace Widgets + Overlay Météo
+    void _drawStatusBar();      // Barre du haut
+    void _drawBottomWidgets();  // Météo + Countdown
 
-    // Dessin
+    // Helpers Dessin
+    void _drawWiFiIcon(int x, int y, bool connected);
+    void _drawWeatherWidget(int x, int y);
+    void _drawCountdownWidget(int x, int y);
+    
+
+    
+    // 🆕 Helper Hexagone
+    void _drawHexagon(LGFX_Sprite* spr, int x, int y, int radius, uint32_t color, bool filled);
+    // Dessin Scènes
     void _drawSceneMenu();
     void _drawAppTrackpad();   
     void _drawAppStreamDeck(); 
     void _drawSetupWifi(); 
-    void _drawWidgets();      
     void _drawNotification(); 
     void _drawTamaMenu(); 
     void _drawMouseStatus(); 
