@@ -1,55 +1,144 @@
 #include "FaceRenderer.h"
 #include "../../include/Theme.h"
 
-uint16_t lightenColor(uint16_t color, uint8_t amount) {
-    uint8_t r = (color >> 11) & 0x1F; uint8_t g = (color >> 5) & 0x3F; uint8_t b = color & 0x1F;
-    r = (r + amount > 31) ? 31 : (r + amount); g = (g + amount*2 > 63) ? 63 : (g + amount*2); b = (b + amount > 31) ? 31 : (b + amount);
-    return (r << 11) | (g << 5) | b;
-}
-uint16_t darkenColor(uint16_t color, uint8_t amount) {
-    uint8_t r = (color >> 11) & 0x1F; uint8_t g = (color >> 5) & 0x3F; uint8_t b = color & 0x1F;
-    r = (r < amount) ? 0 : (r - amount); g = (g < amount*2) ? 0 : (g - amount*2); b = (b < amount) ? 0 : (b - amount);
-    return (r << 11) | (g << 5) | b;
-}
+// 📜 LISTE DES MESSAGES (Personnalisable ici)
+const char* SPEECH_TEXTS[] = {
+    "JAGER!!!!!!!",
+    "Salut !",
+    "Connecte-moi...",
+    "Je suis Majin !",
+    "Tape ma tete !",
+    "J'attends...",
+    "Lets Ride !"
+};
+const int SPEECH_COUNT = 6;
 
 FaceRenderer::FaceRenderer() {}
-
 void FaceRenderer::begin(CoreManager* core, SettingsManager* settings) { _core = core; _settings = settings; }
 
 void FaceRenderer::update() {
-    int energy = _core->getEnergy(); MoodState mood = _core->getMood();
-    if (millis() - _lastGazeChange > (unsigned long)random(1500, 4000)) { _targetEyeX = random(-30, 30); _targetEyeY = random(-20, 20); _lastGazeChange = millis(); }
-    _currentEyeX += (_targetEyeX - _currentEyeX) * 0.1; _currentEyeY += (_targetEyeY - _currentEyeY) * 0.1;
-    float breath = sin(millis() / 1000.0) * 5.0;
-    int maxOpen = 130; if (energy < 20) maxOpen = 40; else if (energy < 40) maxOpen = 80; if (mood == MOOD_SLEEP) maxOpen = 10; 
-    float targetH = maxOpen + breath;
-    if (!_isBlinking) { int blinkDelay = (energy < 30) ? 4000 : 3000; if (millis() - _lastBlinkTime > (unsigned long)random(blinkDelay, blinkDelay * 1.5)) { _isBlinking = true; _lastBlinkTime = millis(); } _currentEyeHeight += (targetH - _currentEyeHeight) * 0.3; } 
-    else { unsigned long duration = millis() - _lastBlinkTime; if (duration < 80) { _currentEyeHeight = map(duration, 0, 80, targetH, 4); } else if (duration < 160) { _currentEyeHeight = map(duration, 80, 160, 4, targetH); } else { _isBlinking = false; _lastBlinkTime = millis(); } }
+    // 1. Hover
+    _hoverPhase += 0.02; 
+    _hoverOffsetX = sin(_hoverPhase * 0.7) * 30.0; _hoverOffsetY = cos(_hoverPhase) * 15.0;       
+
+    // 2. Gaze
+    if (millis() - _lastGazeChange > (unsigned long)random(800, 3000)) { 
+        _targetGazeX = random(-20, 20); _targetGazeY = random(-10, 10); _lastGazeChange = millis(); 
+    }
+    _currentGazeX += (_targetGazeX - _currentGazeX) * 0.3; 
+    _currentGazeY += (_targetGazeY - _currentGazeY) * 0.3;
+
+    // 3. Blink
+    if (!_isBlinking) {
+        if (millis() - _lastBlinkTime > (unsigned long)random(2000, 5000)) { _isBlinking = true; _blinkProgress = 0.0;}
+    } else {
+        _blinkProgress += 0.25; 
+        if (_blinkProgress >= 2.0) { _isBlinking = false; _lastBlinkTime = millis(); }
+    }
+
+    // 4. 💬 UPDATE SPEECH (Toutes les 10s)
+    // On ne fait ça que si le setup n'est pas fait (Mode Attente)
+    if (!_settings->isSetupDone()) {
+        if (millis() - _lastSpeechChange > 10000) {
+            _speechIndex = (_speechIndex + 1) % SPEECH_COUNT;
+            _currentSpeech = String(SPEECH_TEXTS[_speechIndex]);
+            _lastSpeechChange = millis();
+        }
+    } else {
+        _currentSpeech = ""; // Pas de bulle en mode normal (pour l'instant)
+    }
 }
 
 void FaceRenderer::draw(LGFX_Sprite* mainSprite) {
-    mainSprite->fillScreen(0x0000);
+    mainSprite->fillScreen(TFT_BLACK);
     MoodState mood = _core->getMood();
-    uint16_t brickColor = COLOR_PRIMARY; if (mood == MOOD_ANGRY) brickColor = COLOR_DANGER; if (mood == MOOD_SLEEP) brickColor = 0x2124; if (mood == MOOD_HAPPY) brickColor = COLOR_SUCCESS;
-    FaceContext ctx; ctx.gazeX = _currentEyeX; ctx.gazeY = _currentEyeY; ctx.openHeight = _currentEyeHeight; ctx.mood = mood;
-    int startX = 4; 
-    for (int y = 0; y < 240; y += BLOCK_SIZE) {
-        for (int x = startX; x < 320; x += BLOCK_SIZE) {
-            ctx.x = x + BLOCK_SIZE/2; ctx.y = y + BLOCK_SIZE/2;
-            bool drawBlock = false;
-            if (mood == MOOD_HAPPY) drawBlock = FaceHappy::shouldDraw(ctx); else if (mood == MOOD_ANGRY) drawBlock = FaceAngry::shouldDraw(ctx); else if (mood == MOOD_SLEEP) drawBlock = FaceSleep::shouldDraw(ctx); else if (mood == MOOD_BORED) drawBlock = FaceSad::shouldDraw(ctx); else if (mood == MOOD_TIRED) drawBlock = FaceSad::shouldDraw(ctx); else if (mood == MOOD_HUNGRY) drawBlock = FaceAngry::shouldDraw(ctx); else drawBlock = FaceNormal::shouldDraw(ctx); 
-            if (drawBlock) _drawSingleBrick(mainSprite, x, y, brickColor);
-        }
+
+    int cx = (320 / 2) + (int)_hoverOffsetX;
+    int cy = (240 / 2) + (int)_hoverOffsetY;
+
+    // Blink Factor
+    float openFactor = 1.0;
+    if (_isBlinking) {
+        if (_blinkProgress <= 1.0) openFactor = 1.0 - _blinkProgress;
+        else openFactor = _blinkProgress - 1.0;
     }
-    int centerX = 160; _drawBubbles(mainSprite, centerX - 90 + _currentEyeX, centerX + 90 + _currentEyeX, 100 + _currentEyeY);
+    if (mood == MOOD_SLEEP) openFactor = 0.05;
+
+    // Contexte Visage
+    FaceContext ctx;
+    ctx.w = EYE_WIDTH_BASE; ctx.h = EYE_HEIGHT_BASE * openFactor; ctx.color = TFT_WHITE;
+    ctx.gazeX = _currentGazeX; ctx.gazeY = _currentGazeY;
+
+    // Oeil Gauche
+    ctx.x = cx - EYE_SPACING - ctx.w/2; ctx.y = cy - 10; ctx.isLeft = true;
+    switch(mood) {
+        case MOOD_HAPPY: FaceHappy::draw(mainSprite, ctx); break;
+        case MOOD_ANGRY: FaceAngry::draw(mainSprite, ctx); break;
+        case MOOD_SAD:   FaceSad::draw(mainSprite, ctx); break;
+        case MOOD_SLEEP: FaceSleep::draw(mainSprite, ctx); break;
+        case MOOD_LOVE:  FaceLove::draw(mainSprite, ctx); break;
+        default:         FaceNormal::draw(mainSprite, ctx); break;
+    }
+
+    // Oeil Droit
+    ctx.x = cx + EYE_SPACING + ctx.w/2; ctx.isLeft = false;
+    switch(mood) {
+        case MOOD_HAPPY: FaceHappy::draw(mainSprite, ctx); break;
+        case MOOD_ANGRY: FaceAngry::draw(mainSprite, ctx); break;
+        case MOOD_SAD:   FaceSad::draw(mainSprite, ctx); break;
+        case MOOD_SLEEP: FaceSleep::draw(mainSprite, ctx); break;
+        case MOOD_LOVE:  FaceLove::draw(mainSprite, ctx); break;
+        default:         FaceNormal::draw(mainSprite, ctx); break;
+    }
+
+    _drawRobotMouth(mainSprite, cx, cy + 40, mood);
+    
+    // 5. 💬 DESSIN DE LA BULLE (Si texte présent)
+    if (_currentSpeech != "") {
+        // Positionnée en haut à droite, fixe par rapport à l'écran (ne bouge pas avec la tête)
+        _drawSpeechBubble(mainSprite, 220, 50, _currentSpeech);
+    } else {
+        // Sinon on dessine les icônes d'état (Faim/Sommeil)
+        _drawBubbles(mainSprite, cx, cy - 70);
+    }
 }
 
-void FaceRenderer::_drawSingleBrick(LGFX_Sprite* spr, int x, int y, uint16_t mainColor) {
-    int fullSize = BLOCK_SIZE - BLOCK_GAP; int radius = 1; 
-    uint16_t lightColor = lightenColor(mainColor, 4); uint16_t darkColor = darkenColor(mainColor, 4);
-    spr->fillRoundRect(x, y, fullSize, fullSize, radius, darkColor); spr->fillRoundRect(x, y, fullSize - 1, fullSize - 1, radius, lightColor); spr->fillRoundRect(x + 1, y + 1, fullSize - 2, fullSize - 2, 0, mainColor);
+void FaceRenderer::_drawSpeechBubble(LGFX_Sprite* spr, int x, int y, String text) {
+    int w = 100; int h = 40;
+    int r = 10;
+    
+    // Queue de la bulle (Vers la tête)
+    spr->fillTriangle(x - 20, y + h/2, x, y + h/2 - 5, x, y + h/2 + 5, TFT_WHITE);
+    
+    // Corps de la bulle
+    spr->fillRoundRect(x - w/2, y - h/2, w, h, r, TFT_WHITE);
+    
+    // Texte
+    spr->setTextColor(TFT_BLACK);
+    spr->setTextDatum(middle_center);
+    spr->setFont(FONT_UI); // Assure-toi que c'est lisible
+    spr->drawString(text, x, y);
 }
 
-void FaceRenderer::_drawBubbles(LGFX_Sprite* spr, int leftX, int rightX, int centerY) { MoodState mood = _core->getMood(); if (_core->getHunger() > 60) _drawHungerBubble(spr, rightX + 50, centerY - 60); if (_core->getEnergy() < 20 || mood == MOOD_SLEEP) _drawSleepBubble(spr, leftX - 50, centerY - 60); }
-void FaceRenderer::_drawHungerBubble(LGFX_Sprite* spr, int x, int y) { int size = 24; spr->fillCircle(x, y, size, COLOR_WHITE); spr->fillTriangle(x-10, y+size-5, x, y+size-5, x-15, y+size+10, COLOR_WHITE); int bx = x - 10; int by = y - 5; spr->fillRoundRect(bx, by, 20, 4, 2, 0xE463); spr->fillRect(bx, by+5, 20, 2, 0x2580); spr->fillRect(bx, by+8, 20, 3, 0xA145); spr->fillRoundRect(bx, by+12, 20, 4, 2, 0xE463); }
-void FaceRenderer::_drawSleepBubble(LGFX_Sprite* spr, int x, int y) { int size = 24; spr->fillCircle(x, y, size, 0x10A2); spr->fillTriangle(x+10, y+size-5, x, y+size-5, x+15, y+size+10, 0x10A2); spr->setTextColor(COLOR_WHITE); spr->setTextSize(1); spr->setFont(FONT_UI); spr->drawString("Zzz", x, y); }
+void FaceRenderer::_drawRobotMouth(LGFX_Sprite* spr, int cx, int cy, MoodState mood) {
+    uint16_t color = TFT_WHITE;
+    switch (mood) {
+        case MOOD_HAPPY: spr->fillArc(cx, cy - 10, 25, 22, 45, 135, color); break;
+        case MOOD_ANGRY: spr->fillRect(cx - 10, cy, 20, 4, TFT_RED); break;
+        case MOOD_SAD:   spr->fillArc(cx, cy + 10, 25, 22, 225, 315, color); break;
+        case MOOD_SLEEP: spr->drawCircle(cx, cy, 5, color); break;
+        case MOOD_LOVE:  spr->fillArc(cx, cy - 5, 15, 12, 45, 135, color); break;
+        default:         spr->fillArc(cx, cy - 5, 20, 17, 60, 120, color); break;
+    }
+}
+
+void FaceRenderer::_drawBubbles(LGFX_Sprite* spr, int cx, int topY) {
+    if (_core->getHunger() > 80) _drawHungerBubble(spr, cx + 60, topY);
+    if (_core->getEnergy() < 20 || _core->getMood() == MOOD_SLEEP) _drawSleepBubble(spr, cx - 60, topY);
+}
+void FaceRenderer::_drawHungerBubble(LGFX_Sprite* spr, int x, int y) {
+    spr->fillCircle(x, y, 16, TFT_WHITE); spr->drawCircle(x, y, 16, TFT_RED); spr->fillRect(x-8, y-4, 16, 8, TFT_ORANGE);
+}
+void FaceRenderer::_drawSleepBubble(LGFX_Sprite* spr, int x, int y) {
+    spr->fillCircle(x, y, 16, TFT_WHITE); spr->drawCircle(x, y, 16, TFT_BLUE); spr->setTextColor(TFT_BLUE, TFT_WHITE); spr->setTextDatum(middle_center); spr->drawString("Zzz", x, y);
+}

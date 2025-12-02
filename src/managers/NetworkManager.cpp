@@ -1,5 +1,5 @@
 #include "NetworkManager.h"
-#include <Update.h> // ⬅️ INDISPENSABLE POUR OTA
+#include <Update.h> 
 
 NetworkManager::NetworkManager() : _server(80) {
 }
@@ -20,12 +20,17 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
     wifiManager.setMenu(menu);
     wifiManager.setTitle("Majin OS Setup");
     wifiManager.setDebugOutput(false); 
-    wifiManager.setConfigPortalTimeout(180);
+    
+    // ⚠️ CORRECTION LEAD DEV : Timeout Infini (0)
+    // Avant : 180 (3 min) -> Causait le reboot
+    // Après : 0 (Infini) -> Attend sagement la connexion
+    wifiManager.setConfigPortalTimeout(0);
 
     String currentName = settings->getRobotName();
     WiFiManagerParameter custom_robot_name("robot_name", "Donne-moi un nom (Requis)", currentName.c_str(), 32);
     wifiManager.addParameter(&custom_robot_name);
 
+    // Tentative de connexion (ou ouverture du portail si échec)
     bool res = wifiManager.autoConnect("Majin_Setup", "majin1234");
 
     if(!res) {
@@ -268,7 +273,7 @@ void NetworkManager::setupWebServer() {
     _server.on("/api/wifi/reset", HTTP_POST, [this](AsyncWebServerRequest *request){ request->send(200); delay(500); resetWiFi(); ESP.restart(); });
     _server.on("/api/reset", HTTP_POST, [this](AsyncWebServerRequest *request){ request->send(200); delay(500); resetWiFi(); _settings->factoryReset(); ESP.restart(); });
 
-    // ⬅️ NOUVEAU : Route de mise à jour OTA
+    // Route de mise à jour OTA
     _server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
         bool shouldReboot = !Update.hasError();
         AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot ? "OK" : "FAIL");
@@ -282,7 +287,6 @@ void NetworkManager::setupWebServer() {
     }, [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
         if(!index){
             Serial.printf("OTA: Début mise à jour: %s\n", filename.c_str());
-            // Si pas assez de place pour OTA (taille max approx partition app)
             if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
                 Update.printError(Serial);
             }

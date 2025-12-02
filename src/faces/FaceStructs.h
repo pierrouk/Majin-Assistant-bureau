@@ -2,16 +2,18 @@
 #define FACE_STRUCTS_H
 
 #include <Arduino.h>
-#include "../managers/CoreManager.h" // Pour MoodState
+#include <LovyanGFX.hpp>
 
-// Ce que le moteur envoie au visage à chaque frame
+// Structure pour transmettre l'état physique du visage aux fonctions de dessin
 struct FaceContext {
-    int x;              // Position actuelle du pixel (Grille)
-    int y;
-    float gazeX;        // Décalage regard X
-    float gazeY;        // Décalage regard Y
-    float openHeight;   // Hauteur d'ouverture (Clignement)
-    MoodState mood;     // Humeur actuelle
+    int x;          // Position Centre X de l'oeil
+    int y;          // Position Centre Y de l'oeil
+    int w;          // Largeur actuelle (Scale)
+    int h;          // Hauteur actuelle (Scale + Clignement)
+    uint16_t color; // Couleur de l'oeil
+    float gazeX;    // Décalage Pupille X
+    float gazeY;    // Décalage Pupille Y
+    bool isLeft;    // Est-ce l'oeil gauche ? (Pour les asymétries comme Angry)
 };
 
 #endif

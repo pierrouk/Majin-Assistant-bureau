@@ -11,7 +11,9 @@ enum MoodState {
     MOOD_NEUTRAL,
     MOOD_HAPPY,
     MOOD_ANGRY,
+    MOOD_SAD,
     MOOD_SLEEP,
+    MOOD_LOVE,
     MOOD_TIRED,
     MOOD_HUNGRY,
     MOOD_BORED
