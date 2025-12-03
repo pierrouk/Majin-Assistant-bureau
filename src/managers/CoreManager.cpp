@@ -35,7 +35,7 @@ void CoreManager::_checkAutoSleep() {
             }
             // Si cela fait plus de 5 secondes qu'il fait noir
             else if (millis() - _darknessTimer > 5000) {
-                Serial.println("🌑 [Core]: Il fait noir... Dodo zzz");
+                log_i("🌑 [Core]: Il fait noir... Dodo zzz");
                 sleep(false); // false = pas forcé par user, mais par environnement
                 _darknessTimer = 0; // Reset
             }
@@ -46,7 +46,7 @@ void CoreManager::_checkAutoSleep() {
         _darknessTimer = 0; // On reset le timer si la lumière revient
         
         if (_isSleeping) {
-            Serial.println("☀️ [Core]: Lumière détectée ! Réveil !");
+            log_i("☀️ [Core]: Lumière détectée ! Réveil !");
             wakeUp();
         }
     }
@@ -89,7 +89,7 @@ void CoreManager::setMood(MoodState newMood) {
     else if (newMood == MOOD_NEUTRAL) { _fun = 50; _hunger = 50; _energy = 50; }
     _saveStats();
 }
-void CoreManager::resetLife() { _energy = 100; _hunger = 0; _fun = 100; _isSleeping = false; _currentMood = MOOD_HAPPY; _saveStats(); Serial.println("🥚 [Core]: Reset Vie Complet !"); }
+void CoreManager::resetLife() { _energy = 100; _hunger = 0; _fun = 100; _isSleeping = false; _currentMood = MOOD_HAPPY; _saveStats(); log_i("🥚 [Core]: Reset Vie Complet !"); }
 void CoreManager::feed(int amount) { _hunger -= amount; if (_hunger < 0) _hunger = 0; _fun += 2; _saveStats(); }
 void CoreManager::play(int amount) { if (_isSleeping) return; _fun += amount; if (_fun > 100) _fun = 100; _energy -= 2; _hunger += 2; _saveStats(); }
 void CoreManager::sleep(bool force) { _isSleeping = true; _currentMood = MOOD_SLEEP; _saveStats(); }

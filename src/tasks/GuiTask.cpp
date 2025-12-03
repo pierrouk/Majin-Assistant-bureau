@@ -2,11 +2,11 @@
 #include "GuiTask.h"
 
 void TaskGUI(void *pvParameters) {
-    Serial.println("🎨 [GuiTask] Démarrage Core 1 (Fast Boot)");
+    log_i("🎨 [GuiTask] Démarrage Core 1 (Fast Boot)");
 
     // 1. Initialisation de l'écran
     if (!majinScreen.begin()) { 
-        Serial.println("❌ GUI: Erreur Ecran"); 
+        log_i("❌ GUI: Erreur Ecran"); 
     } else { 
         // Initialisation du Manager UI
         // On passe les pointeurs globaux définis dans Globals.h

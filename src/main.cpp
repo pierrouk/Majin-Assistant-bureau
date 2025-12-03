@@ -24,7 +24,7 @@ QueueHandle_t guiQueue;
 void setup() {
     Serial.begin(115200);
     delay(1000); 
-    Serial.println("\n=== MAJIN OS v3.1 : MODULAR TASK SYSTEM ===");
+    log_i("\n=== MAJIN OS v3.1 : MODULAR TASK SYSTEM ===");
 
     Wire.begin(ESP32_I2C_SDA_PIN, ESP32_I2C_SCL_PIN);
 
@@ -72,7 +72,7 @@ void setup() {
     });
 
     // 6. Lancement des Tâches
-    Serial.println("🚀 Kernel Start");
+    log_i("🚀 Kernel Start");
     xTaskCreatePinnedToCore(TaskSystem, "SystemTask", 4096, NULL, 2, NULL, 0);
     xTaskCreatePinnedToCore(TaskGUI,    "GuiTask",    8192, NULL, 1, NULL, 1);
 }

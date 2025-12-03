@@ -10,12 +10,12 @@ bool LightSensor::begin(TwoWire *wirePtr) {
     
     // On tente de démarrer le VEML sur le bus spécifié
     if (!_veml.begin(wirePtr)) {
-        Serial.println("🔴 ERREUR [LightSensor]: VEML7700 introuvable !");
+        log_i("🔴 ERREUR [LightSensor]: VEML7700 introuvable !");
         _isInitialized = false;
         return false;
     }
 
-    Serial.println("🟢 [LightSensor]: VEML7700 connecté.");
+    log_i("🟢 [LightSensor]: VEML7700 connecté.");
     
     // Configuration pour un environnement de bureau (Lumière artificielle + Naturelle)
     configureAutoRange();

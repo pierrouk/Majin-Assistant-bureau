@@ -54,7 +54,7 @@ uint16_t BootSequence::_rainbowColor(uint8_t index) {
 void BootSequence::_playIntroSync(LGFX_Majin* tft, SoundSystem* voice, ServoMotor* head) {
     int noteIndex = 0;
     int centerX = 160;
-    int centerY = 120; // Recentré car plus de montagnes
+    int centerY = 120;
 
     SnowFlake snow[SNOW_COUNT];
     for(int i=0; i<SNOW_COUNT; i++) {
@@ -96,12 +96,21 @@ void BootSequence::_playIntroSync(LGFX_Majin* tft, SoundSystem* voice, ServoMoto
             cursorX += tft->textWidth(title.substring(i, i+1));
         }
 
+        // Sous-titre "Lets ride !!!"
         tft->setFont(FONT_UI); tft->setTextSize(1.5); tft->setTextColor(COLOR_WHITE);
         tft->drawString("Lets ride !!!", centerX, centerY + 40);
+        
+        // ⬅️ NOUVEAU : Affichage Version (Bas Droite)
+        tft->setFont(FONT_SMALL); 
+        tft->setTextSize(1); 
+        tft->setTextColor(0x5555); // Gris discret
+        tft->setTextDatum(bottom_right);
+        tft->drawString(MAJIN_FW_VERSION, 315, 235);
+
         tft->endWrite();
     }
     
-    // Transition Vectorielle
+    // Transition Vectorielle (Reste inchangée)
     tft->fillScreen(COLOR_BG); head->setAngle(90); 
     int eyeW_Base = 55; int eyeH_Base = 85; int eyeSpacing = 35;
     tft->fillEllipse(centerX - eyeSpacing - eyeW_Base/2, 120, eyeW_Base/2, 2, COLOR_WHITE);

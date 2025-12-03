@@ -4,19 +4,19 @@ EnvironmentSensor::EnvironmentSensor() {
 }
 
 bool EnvironmentSensor::begin() {
-    Serial.println("🌡️ [EnvSensor]: Démarrage AHT10...");
+    log_i("🌡️ [EnvSensor]: Démarrage AHT10...");
     
     // On utilise l'instance globale Wire (déjà initialisée sur 5/6 dans le main)
     // Pas besoin de refaire Wire.begin() ici.
     
     if (!_aht.begin(&Wire)) {
-        Serial.println("🔴 ERREUR [EnvSensor]: AHT10 non trouvé !");
-        Serial.println("   -> Vérifiez le câblage sur les pins 5 (SDA) et 6 (SCL)");
+        log_i("🔴 ERREUR [EnvSensor]: AHT10 non trouvé !");
+        log_i("   -> Vérifiez le câblage sur les pins 5 (SDA) et 6 (SCL)");
         _initialized = false;
         return false;
     }
 
-    Serial.println("🟢 [EnvSensor]: AHT10 Connecté.");
+    log_i("🟢 [EnvSensor]: AHT10 Connecté.");
     _initialized = true;
     return true;
 }
