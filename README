@@ -1,0 +1,86 @@
+# 🤖 MAJIN OS - The Desktop Companion (v1.0)
+
+**Majin OS** est un firmware avancé pour ESP32-S3 transformant un écran tactile en un véritable compagnon de bureau vivant et utile.
+Il combine un simulateur de vie artificielle (type Tamagotchi) avec des outils de productivité (Stream Deck, Mouse Jiggler) et des widgets connectés.
+
+---
+
+## ✨ Fonctionnalités Principales
+
+### 🧠 Vie Artificielle & Emotions
+* **Visage Vectoriel :** Moteur de rendu haute fluidité (LovyanGFX).
+* **Système d'Humeurs :** Majin ressent la faim, la fatigue et l'ennui. Son visage change dynamiquement (Joie, Colère, Tristesse, Sommeil...).
+* **Rythme Circadien :** Il s'endort automatiquement s'il fait noir (capteur de lumière) ou s'il est épuisé.
+* **Interactions :** Réagit aux caresses (tactile) et communique via des bulles de texte et des sons "R2D2".
+
+### 🛠️ Outils de Productivité (USB HID)
+* **Stream Deck Hexagonal :** 4 pages de 6 boutons tactiles personnalisables pour lancer des raccourcis clavier sur le PC.
+* **Mouse Jiggler :** Mode automatique pour empêcher la mise en veille de l'ordinateur.
+* **Feedback Haptique :** Vibration à chaque interaction.
+
+### 🌐 Connectivité & Widgets
+* **Interface Web Complète :** Configuration totale via navigateur (IP du robot).
+* **Météo Locale :** Affichage en temps réel (API Open-Meteo) et icônes dynamiques.
+* **Compte à Rebours :** Widget "Jours restants" avec calcul des jours ouvrés pour vos événements (Vacances, Deadline...).
+* **Mises à jour OTA :** Mise à jour du firmware sans câble via le WiFi.
+
+---
+
+## 🔌 Matériel Requis
+
+* **Cerveau :** ESP32-S3 (Support USB Natif requis).
+* **Affichage :** Écran LCD tactile 3.5" ou 2.8" (Driver ILI9488 ou ST7796).
+* **Son :** Buzzer passif ou petit haut-parleur + Ampli.
+* **Mouvement :** Servo-moteur (MG90S) pour l'axe de la tête.
+* **Sensors :**
+    * **AHT10 / BME280 :** Température & Humidité ambiante.
+    * **VEML7700 :** Capteur de luminosité (Lux) pour l'auto-brightness et le sommeil.
+* **Haptique :** Module vibreur plat.
+
+---
+
+## 🚀 Installation
+
+1.  **Ouvrir le projet :** Utiliser VS Code avec l'extension **PlatformIO**.
+2.  **Configuration :** Vérifier le fichier `src/include/config.h` (ou `Globals.h`) pour adapter les broches (Pins) à votre câblage.
+3.  **Upload :**
+    * Connecter l'ESP32 via le port marqué **USB** (et non UART).
+    * Téléverser le code et le système de fichiers (LittleFS).
+4.  **Premier Démarrage :**
+    * Majin se réveille avec une intro "Winter".
+    * Connectez-vous au WiFi `Majin_Setup` (mot de passe `majin1234`).
+    * Configurez votre WiFi domestique via le portail captif.
+
+---
+
+## 📖 Guide de l'Interface
+
+### Gestes (Touchscreen)
+* **Swipe Haut :** Ouvrir le Menu d'Applications (Hexagonal).
+* **Swipe Bas :** Ouvrir le Menu "Soins" (Tamagotchi).
+* **Swipe Gauche/Droite :** Naviguer dans les pages du Stream Deck.
+* **Tap Tête :** Interaction sociale (Bonjour) ou raccourci Config.
+* **Appui Long Tête :** Retour à l'accueil d'urgence.
+
+### Menus
+* **Config :** Réglages systèmes (pas encore implémenté graphiquement, utiliser le Web).
+* **Deck :** Lanceur de raccourcis.
+* **Souris :** Active/Désactive le mode Jiggler.
+
+---
+
+## 💻 Interface Web
+
+Accédez à `http://[IP_DU_ROBOT]` pour :
+* **Dashboard :** Voir l'état de santé (Faim/Energie) et les capteurs.
+* **Deck Config :** Assigner des raccourcis clavier, couleurs et icônes aux boutons.
+* **Personnalisation :** Changer le nom, la ville météo, calibrer le capteur de lumière.
+* **Event :** Configurer la date cible du compte à rebours.
+
+---
+
+## 🛠️ Crédits
+
+* **Développement :** Pierrick & Gemini Lead Dev AI.
+* **Version :** 1.0.0 "Cyber-Awakening".
+* **Framework :** Arduino / PlatformIO / FreeRTOS.

@@ -77,7 +77,7 @@ private:
     bool _cache_showSensors = true;
     bool _cache_servoEnabled = true;
     bool _cache_buzzerEnabled = true;
-    bool _cache_weatherEnabled = false;
+    bool _cache_weatherEnabled = true;
     uint8_t _cache_volume = 50;
     uint8_t _cache_brightness = 200;
     String _cache_name = "Majin Bot";
