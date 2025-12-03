@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 #include <LovyanGFX.hpp>
-#include "CoreManager.h"
-#include "SettingsManager.h"
+#include "../managers/CoreManager.h"
+#include "../managers/SettingsManager.h"
 #include "../faces/FaceStructs.h"
 
 // Inclusions modulaires
