@@ -1,21 +1,19 @@
 #include "../Globals.h"
 #include "SystemTask.h"
 
+// Note: Les #define sont supprimés car on utilise SettingsManager maintenant
+
 void TaskSystem(void *pvParameters) {
     Serial.println("⚙️ [SysTask] Démarrage Core 0");
 
-    // Démarrage USB HID
     majinUSB.begin();
+    majinEnv.begin();  
+    majinEyes.begin(); 
 
-    // Démarrage Réseau & Services
-    // On passe les pointeurs hardware pour le contrôle via Web
     if (majinNet.begin(&majinSettings, &majinCore, &majinVoice, &majinHead)) {
         majinCore.begin(&majinSettings);
-        
         RobotCommand cmd = CMD_WIFI_CONNECTED;
         xQueueSend(guiQueue, &cmd, 0);
-        
-        // Force météo immédiate
         majinNet.fetchWeather();
     } else {
         RobotCommand cmd = CMD_WIFI_FAIL;
@@ -24,49 +22,66 @@ void TaskSystem(void *pvParameters) {
 
     unsigned long lastEnvTime = 0;
     unsigned long lastWeatherTime = millis(); 
+    
+    float smoothedLux = 50.0; 
 
     while (true) {
-        // 1. Moteur Audio (Prioritaire)
         majinVoice.update();
-        
-        // 2. Moteur Jiggler (USB)
         majinUSB.update();
         
-        // 3. Gestion Tactile Tête (Hardware)
         majinTouch.update();
         TouchEventType event = majinTouch.getEvent();
         
         if (event == TOUCH_SINGLE) {
-            // Tap simple -> Interaction
-            RobotCommand cmd = CMD_HEAD_TAP;
-            xQueueSend(guiQueue, &cmd, 0);
+            if (majinCore.getMood() == MOOD_SLEEP) {
+                majinCore.wakeUp();
+            } else {
+                RobotCommand cmd = CMD_HEAD_TAP;
+                xQueueSend(guiQueue, &cmd, 0);
+            }
         }
         else if (event == TOUCH_LONG) {
-            // Appui Long -> Sortie de secours
             Serial.println("⚙️ [SysTask] Tête: Appui Long détecté !");
             RobotCommand cmd = CMD_HEAD_LONG_PRESS;
             xQueueSend(guiQueue, &cmd, 0);
         }
 
-        // 4. Capteurs Locaux (Toutes les 2s)
-        if (millis() - lastEnvTime > 2000) {
+        // 4. Capteurs Locaux (Toutes les 500ms)
+        if (millis() - lastEnvTime > 500) {
             lastEnvTime = millis();
-            EnvData env = majinEnv.read();
-            float lux = majinEyes.getLux();
+            
+            // Lecture des capteurs ICI
+            EnvData env = majinEnv.read(); // Déclaration locale
+            float rawLux = majinEyes.getLux();
+            
+            // Lissage
+            smoothedLux = (smoothedLux * 0.8) + (rawLux * 0.2);
+
+            // Settings Dynamiques
+            float sleepThreshold = majinSettings.getAutoSleepThreshold();
+            int brightMin = majinSettings.getScreenMin();
+            int brightMax = majinSettings.getScreenMax();
+            float daylightLux = 400.0; 
+
+            // Envoi au Core
             if (env.valid) {
-                majinCore.setSensorData(env.temperature, env.humidity, lux);
+                majinCore.setSensorData(env.temperature, env.humidity, smoothedLux);
             }
-            // Mise à jour de la vie (Tamagotchi)
+            
+            // Auto Brightness
+            int targetBright = map((long)smoothedLux, 20, (long)daylightLux, brightMin, brightMax);
+            if (targetBright > 255) targetBright = 255;
+            if (targetBright < brightMin) targetBright = brightMin;
+
+            majinScreen.setBrightness(targetBright);
             majinCore.update();
         }
         
-        // 5. Météo Web (Toutes les 10 min)
         if (millis() - lastWeatherTime > 600000) {
             lastWeatherTime = millis();
             majinNet.fetchWeather();
         }
 
-        // Pause courte pour laisser respirer le Watchdog
         vTaskDelay(pdMS_TO_TICKS(10));
     }
 }

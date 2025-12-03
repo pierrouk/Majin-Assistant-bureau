@@ -26,6 +26,8 @@ private:
     void _drawIconVacation(LGFX_Sprite* spr, int x, int y);
     void _drawIconWedding(LGFX_Sprite* spr, int x, int y); // Bague
     void _drawIconMountain(LGFX_Sprite* spr, int x, int y); // Montagne
+    void setEventHolidays(int days);
+    int getEventHolidays();
 };
 
 #endif

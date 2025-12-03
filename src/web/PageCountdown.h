@@ -6,7 +6,8 @@
 
 class PageCountdown {
 public:
-    static String getHTML(String name, unsigned long timestamp, int type) {
+    // Ajout argument 'holidays'
+    static String getHTML(String name, unsigned long timestamp, int type, int holidays) {
         String html = R"rawliteral(<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Compte à Rebours</title>)rawliteral";
         html += WebTheme::getCommonCSS();
         html += R"rawliteral(</head><body>)rawliteral";
@@ -16,7 +17,6 @@ public:
         <div class="container">
             <h1>Gestion Événement</h1>
             
-            <!-- 🟢 CARTE RÉSUMÉ (S'affiche seulement si un event existe) -->
             )rawliteral";
             
             if (timestamp > 0 && name.length() > 0) {
@@ -25,6 +25,7 @@ public:
                     <h3 style="color:var(--success); margin-top:0;">✅ Événement Actif</h3>
                     <h1 style="font-size: 2.5rem; margin: 10px 0; color: white;">)rawliteral" + name + R"rawliteral(</h1>
                     <p id="display-date" style="font-size: 1.2rem; color: #ccc;">...</p>
+                    <p style="font-size: 0.9rem; color: #888;">Congés déduits : )rawliteral" + String(holidays) + R"rawliteral( jours</p>
                 </div>
                 )rawliteral";
             }
@@ -32,17 +33,21 @@ public:
             html += R"rawliteral(
 
             <div class="card">
-                <h3>🎯 Configurer / Modifier</h3>
-                <p>Programmez une date. Une tape sur la tête du robot affichera le compte à rebours.</p>
-                
+                <h3>🎯 Configurer</h3>
                 <form action="/api/countdown/set" method="POST" onsubmit="return prepareDate()">
                     <label>Nom de l'événement</label>
-                    <input type="text" id="evt_name" name="name" value=")rawliteral" + name + R"rawliteral(" placeholder="Ex: Vacances, Anniversaire..." required>
+                    <input type="text" id="evt_name" name="name" value=")rawliteral" + name + R"rawliteral(" placeholder="Ex: Vacances..." required>
                     
-                    <label>Date et Heure Cible</label>
+                    <label>Date Cible</label>
                     <input type="datetime-local" id="evt_date" required>
                     <input type="hidden" id="evt_timestamp" name="timestamp">
                     
+                    <div style="margin: 15px 0;">
+                        <label>Jours de Congés (à déduire)</label>
+                        <input type="number" name="holidays" value=")rawliteral" + String(holidays) + R"rawliteral(" min="0" max="100" placeholder="0">
+                        <p style="font-size:0.8rem; color:#666;">Sera soustrait du calcul des jours ouvrés.</p>
+                    </div>
+
                     <label>Type d'animation</label>
                     <select name="type" id="evt_type">
                         <option value="0" )rawliteral" + String(type==0?"selected":"") + R"rawliteral(>Standard (Bleu)</option>
@@ -66,15 +71,11 @@ public:
         html += R"rawliteral(
         <script>
             var serverTimestamp = )rawliteral" + String(timestamp) + R"rawliteral(;
-            
-            // Initialisation
             if(serverTimestamp > 0) {
                 var date = new Date(serverTimestamp * 1000);
-                // 1. Remplir le champ input (Conversion locale)
                 var localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
                 document.getElementById('evt_date').value = localDate.toISOString().slice(0,16);
                 
-                // 2. Remplir la carte résumé
                 var disp = document.getElementById('display-date');
                 if(disp) {
                     var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -91,8 +92,8 @@ public:
             }
             
             function clearEvent() {
-                if(confirm("Supprimer l'événement ?")) {
-                   fetch('/api/countdown/delete', {method:'POST'}).then(() => window.location.reload());
+                if(confirm("Supprimer ?")) {
+                    fetch('/api/countdown/delete', {method:'POST'}).then(() => window.location.reload());
                 }
             }
         </script>
@@ -100,5 +101,4 @@ public:
         return html;
     }
 };
-
 #endif

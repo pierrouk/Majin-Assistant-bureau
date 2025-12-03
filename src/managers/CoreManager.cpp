@@ -17,7 +17,39 @@ void CoreManager::begin(SettingsManager* settings) {
 
 void CoreManager::update() {
     _decayStats();
+    _checkAutoSleep(); // ⬅️ Vérification Lumière
     _calculateMood();
+}
+
+// 💡 LOGIQUE SOMMEIL AUTOMATIQUE (DYNAMIQUE)
+void CoreManager::_checkAutoSleep() {
+    // Récupération du seuil configuré (ex: 2.0 Lux)
+    float threshold = _settings->getAutoSleepThreshold();
+    
+    // SEUIL NUIT (Si < seuil)
+    if (_lux < threshold) {
+        if (!_isSleeping) {
+            // Si le timer n'est pas lancé, on le lance
+            if (_darknessTimer == 0) {
+                _darknessTimer = millis();
+            }
+            // Si cela fait plus de 5 secondes qu'il fait noir
+            else if (millis() - _darknessTimer > 5000) {
+                Serial.println("🌑 [Core]: Il fait noir... Dodo zzz");
+                sleep(false); // false = pas forcé par user, mais par environnement
+                _darknessTimer = 0; // Reset
+            }
+        }
+    } 
+    // SEUIL JOUR (Si > seuil + 5 pour hystérésis)
+    else if (_lux > (threshold + 5.0)) {
+        _darknessTimer = 0; // On reset le timer si la lumière revient
+        
+        if (_isSleeping) {
+            Serial.println("☀️ [Core]: Lumière détectée ! Réveil !");
+            wakeUp();
+        }
+    }
 }
 
 void CoreManager::_decayStats() {
@@ -26,7 +58,7 @@ void CoreManager::_decayStats() {
     if (millis() - lastDecay > 60000) { 
         lastDecay = millis();
         struct tm timeinfo; bool timeValid = getLocalTime(&timeinfo); int hour = timeValid ? timeinfo.tm_hour : 12;
-        if (_isSleeping) { _energy += 0.21; if (_energy >= 100 && hour >= 7 && hour < 10) wakeUp(); } 
+        if (_isSleeping) { _energy += 0.21; } // On enlève le réveil horaire ici, c'est la lumière qui décide
         else { float dropRate = 0.11; if (hour >= 23 || hour < 6) dropRate = 0.25; _energy -= dropRate; }
         if (!_isSleeping) { float hungerRate = 0.05; if (hour >= 11 && hour <= 13) hungerRate = 0.4; if (hour >= 18 && hour <= 20) hungerRate = 0.4; _hunger += hungerRate; _fun -= 0.2; }
         if (_energy > 100) _energy = 100; if (_energy < 0) _energy = 0;
@@ -73,8 +105,6 @@ float CoreManager::getLux()  { return _lux; }
 int CoreManager::getEnergy() { return (int)_energy; }
 int CoreManager::getHunger() { return (int)_hunger; }
 int CoreManager::getFun()    { return (int)_fun; }
-
-// ⬅️ NOUVEAU : Implémentation Météo Externe
 void CoreManager::setExternalWeather(int code, float temp) { _extWeatherCode = code; _extTemp = temp; }
 int CoreManager::getExternalWeatherCode() { return _extWeatherCode; }
 float CoreManager::getExternalTemp() { return _extTemp; }

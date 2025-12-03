@@ -232,7 +232,7 @@ void TaskGUI(void *pvParameters) {
                         // Fin du Setup
                         majinSettings.setSetupDone(true); 
                         String name = majinSettings.getRobotName(); 
-                        majinUI.showNotification("BONJOUR " + name + " !", 0x07F3, 4000); 
+majinVoice.playSuccess(); // R2D2 Content
                         majinUI.setScene(SCENE_FACE); 
                     }
                     else { 
@@ -247,21 +247,32 @@ void TaskGUI(void *pvParameters) {
                     break;
                 
                 case CMD_HELLO: 
-                    majinVoice.playNotification(); 
+                    majinVoice.playHappy(); // Son R2D2
                     majinUI.showNotification("BONJOUR !", 0x079F, 2000); 
-                    if (majinUI.getScene() == SCENE_FACE) { majinHead.setAngle(45); vTaskDelay(200); majinHead.setAngle(90); } 
+                    majinHead.animHappy(); // ⬅️ Nouvelle animation
                     break;
+
                 case CMD_DANCE: 
-                    majinVoice.playNotification(); 
+                    majinVoice.playSuccess();
                     majinUI.showNotification("PARTY TIME!", 0xF80A, 4000); 
-                    for(int i=0; i<3; i++) { majinHead.setAngle(60); vTaskDelay(150); majinHead.setAngle(120); vTaskDelay(150); } majinHead.setAngle(90); 
+                    // Danse custom
+                    majinHead.shake(4, 30, 150); 
                     break;
+
                 case CMD_MOOD_HAPPY: 
-                    majinVoice.playSuccess(); 
+                    majinVoice.playHappy(); 
+                    majinHead.animHappy(); // ⬅️ Hop !
                     break;
+
                 case CMD_MOOD_ANGRY: 
-                    majinVoice.playError(); 
-                    majinHead.setAngle(70); vTaskDelay(100); majinHead.setAngle(90); 
+                    majinVoice.playAngry(); 
+                    majinHead.animAngry(); // ⬅️ Hop !
+                    break;
+                
+                case CMD_MOOD_SAD:    // Ajoute ces cas si tu les as dans ton Enum RobotCommand
+                case CMD_MOOD_TIRED:
+                    majinVoice.playSad();
+                    majinHead.animSad();
                     break;
                 default: break;
             }

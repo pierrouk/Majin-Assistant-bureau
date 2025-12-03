@@ -8,22 +8,14 @@
 #include "SettingsManager.h" 
 
 enum MoodState {
-    MOOD_NEUTRAL,
-    MOOD_HAPPY,
-    MOOD_ANGRY,
-    MOOD_SAD,
-    MOOD_SLEEP,
-    MOOD_LOVE,
-    MOOD_TIRED,
-    MOOD_HUNGRY,
-    MOOD_BORED
+    MOOD_NEUTRAL, MOOD_HAPPY, MOOD_ANGRY, MOOD_SAD, 
+    MOOD_SLEEP, MOOD_LOVE, MOOD_TIRED, MOOD_HUNGRY, MOOD_BORED
 };
 
 class CoreManager {
 public:
     CoreManager();
     void begin(SettingsManager* settings);
-    
     void update(); 
 
     String getTimeString();
@@ -31,30 +23,21 @@ public:
     void setMood(MoodState newMood);
     MoodState getMood();
     
-    // --- Capteurs Internes ---
+    // --- Capteurs ---
     void setSensorData(float temp, float hum, float lux);
-    float getTemp();
-    float getHum();
-    float getLux();
+    float getTemp(); float getHum(); float getLux();
 
-    // ⬅️ NOUVEAU : Météo Externe
+    // --- Météo Externe ---
     void setExternalWeather(int code, float temp);
-    int getExternalWeatherCode();
-    float getExternalTemp();
+    int getExternalWeatherCode(); float getExternalTemp();
 
-    // --- Actions Tamagotchi ---
-    void feed(int amount); 
-    void play(int amount); 
-    void sleep(bool force); 
-    void wakeUp();
-    void resetLife();
+    // --- Actions ---
+    void feed(int amount); void play(int amount); 
+    void sleep(bool force); void wakeUp(); void resetLife();
 
-    // --- Getters Jauges ---
-    int getEnergy();
-    int getHunger();
-    int getFun();
+    // --- Stats ---
+    int getEnergy(); int getHunger(); int getFun();
     void changeEnergy(int delta);
-
     uint16_t getGlobalColor(); 
 
 private:
@@ -62,20 +45,18 @@ private:
     MoodState _currentMood = MOOD_NEUTRAL;
     
     float _temp = 0.0f; float _hum = 0.0f; float _lux = 0.0f;
+    int _extWeatherCode = -1; float _extTemp = 0.0f;
 
-    // ⬅️ NOUVEAU : Variables Météo Externe
-    int _extWeatherCode = -1; 
-    float _extTemp = 0.0f;
-
-    float _energy = 100; 
-    float _hunger = 0;   
-    float _fun = 100;    
-
+    float _energy = 100; float _hunger = 0; float _fun = 100;    
     bool _isSleeping = false;
+
+    // 💡 TIMER AUTO-SLEEP
+    unsigned long _darknessTimer = 0; 
 
     void _calculateMood();
     void _decayStats(); 
     void _saveStats();  
+    void _checkAutoSleep(); // Nouvelle fonction privée
 };
 
 #endif

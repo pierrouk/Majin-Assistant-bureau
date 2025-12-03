@@ -32,7 +32,13 @@ public:
     // --- Personnalisation ---
     void setShowTime(bool show); bool getShowTime();
     void setShowSensors(bool show); bool getShowSensors();
+
+    void setAutoSleepThreshold(float val);
+    float getAutoSleepThreshold();
     
+    void setScreenMinMax(int min, int max);
+    int getScreenMin();
+    int getScreenMax();
     // Forçage de l'expression (-1 = Auto)
     void setManualMood(int moodId); 
     int getManualMood();
@@ -61,7 +67,8 @@ public:
     DeckButton getDeckButton(int index); 
 
     void factoryReset(); 
-
+void setEventHolidays(int days);
+    int getEventHolidays();
 private:
     Preferences _prefs;
     const char* _namespace = "majin_cfg"; 

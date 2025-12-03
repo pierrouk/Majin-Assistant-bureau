@@ -375,9 +375,19 @@ void UIManager::update() {
         _menuScrollCurrent += (_menuScrollTarget - _menuScrollCurrent) * 0.2;
     }
 
-    if (_currentScene == SCENE_FACE || _currentScene == SCENE_SETUP_WIFI) { _face.update(); }
-    if (_currentScene == SCENE_COUNTDOWN) { if (millis() - _sceneStartTime > SCENE_TIMEOUT) setScene(SCENE_FACE); }
-    if (_notifDuration > 0 && (millis() - _notifStartTime > _notifDuration)) { _notifMsg = ""; _notifDuration = 0; }
+    // Animation Visage
+    if (_currentScene == SCENE_FACE || _currentScene == SCENE_SETUP_WIFI) { 
+        _face.update(); 
+    }
+
+    // 🛑 CORRECTION : SUPPRESSION DU RETOUR AUTO
+    // if (_currentScene == SCENE_COUNTDOWN) { if (millis() - _sceneStartTime > SCENE_TIMEOUT) setScene(SCENE_FACE); }
+    
+    // Gestion fin notification
+    if (_notifDuration > 0 && (millis() - _notifStartTime > _notifDuration)) { 
+        _notifMsg = ""; 
+        _notifDuration = 0; 
+    }
 }
 
 // 🕸️ INTERACTION MENU HEXAGONAL

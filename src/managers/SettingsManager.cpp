@@ -37,7 +37,27 @@ void SettingsManager::_loadCache() {
         _prefs.putBytes("deck_data", _cache_deck, sizeof(_cache_deck));
     }
 }
+// 💡 CALIBRATION LUMIERE
+void SettingsManager::setAutoSleepThreshold(float val) {
+    _prefs.putFloat("sleep_th", val);
+}
 
+float SettingsManager::getAutoSleepThreshold() {
+    // 5.0 est la valeur par défaut si non réglé
+    return _prefs.getFloat("sleep_th", 5.0); 
+}
+
+void SettingsManager::setScreenMinMax(int min, int max) {
+    _prefs.putInt("scr_min", min);
+    _prefs.putInt("scr_max", max);
+}
+int SettingsManager::getScreenMin() {
+    return _prefs.getInt("scr_min", 30); // Min par défaut
+}
+
+int SettingsManager::getScreenMax() {
+    return _prefs.getInt("scr_max", 255); // Max par défaut
+}
 bool SettingsManager::isSetupDone() { return _prefs.getBool("setup_done", false); }
 void SettingsManager::setSetupDone(bool done) { _prefs.putBool("setup_done", done); }
 void SettingsManager::setVolume(uint8_t volume) { if (volume > 100) volume = 100; _cache_volume = volume; _prefs.putUChar("volume", volume); }
@@ -101,3 +121,5 @@ void SettingsManager::factoryReset() {
     _loadCache();
     Serial.println("💾 [Settings]: Mémoire vidée.");
 }
+void SettingsManager::setEventHolidays(int days) { _prefs.putInt("evt_hol", days); }
+int SettingsManager::getEventHolidays() { return _prefs.getInt("evt_hol", 0); }
