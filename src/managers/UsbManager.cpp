@@ -4,13 +4,13 @@ UsbManager::UsbManager() {
 }
 
 void UsbManager::begin() {
-    Serial.println("🔌 [USB]: Démarrage HID Natif...");
+    log_i("🔌 [USB]: Démarrage HID Natif...");
     _mouse.begin();
     _keyboard.begin();
     _consumerControl.begin(); 
     USB.begin();
     _isReady = true;
-    Serial.println("🔌 [USB]: Prêt.");
+    log_i("🔌 [USB]: Prêt.");
 }
 
 bool UsbManager::isConnected() { return _isReady; }
@@ -21,7 +21,7 @@ void UsbManager::clickMouse() { _mouse.click(MOUSE_LEFT); }
 // 🛠️ CORRECTION : Réintégration du mouvement manuel
 void UsbManager::jiggleMouse() {
     if (!_isReady) return;
-    Serial.println("🔌 [USB]: Jiggle manuel !");
+    log_i("🔌 [USB]: Jiggle manuel !");
     // Petit carré
     _mouse.move(10, 0); delay(50);
     _mouse.move(-10, 0); delay(50);

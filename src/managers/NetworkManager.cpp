@@ -1,6 +1,6 @@
 #include "NetworkManager.h"
 #include <Update.h> 
-
+#include <ESPmDNS.h> // ⬅️ NOUVEAU : Bibliothèque mDNS
 NetworkManager::NetworkManager() : _server(80) {
 }
 
@@ -10,7 +10,7 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
     _sound = sound;
     _servo = servo;
 
-    Serial.println("📡 [Network]: Démarrage WiFiManager...");
+    log_i("📡 [Network]: Démarrage WiFiManager...");
 
     WiFiManager wifiManager;
     String customHead = WebTheme::getCommonCSS() + WebTheme::getSetupInjectionJS();
@@ -32,7 +32,7 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
     bool res = wifiManager.autoConnect("Majin_Setup", "majin1234");
 
     if(!res) {
-        Serial.println("🔴 [Network]: Échec connexion.");
+        log_i("🔴 [Network]: Échec connexion.");
         _connected = false;
         return false;
     } 
@@ -43,8 +43,14 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
         settings->setRobotName(newName);
     }
 
-    Serial.println("🟢 [Network]: Connecté !");
+    log_i("🟢 [Network]: Connecté !");
     _connected = true;
+    // ⬅️ NOUVEAU : Démarrage mDNS (http://majin.local)
+    if (MDNS.begin("majin")) {
+        log_i("🌐 [Network]: mDNS démarré ! Accès via http://majin.local");
+    } else {
+        log_i("⚠️ [Network]: Erreur mDNS");
+    }
     setupWebServer();
     return true;
 }
@@ -52,7 +58,7 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
 void NetworkManager::resetWiFi() {
     WiFiManager wifiManager;
     wifiManager.resetSettings();
-    Serial.println("📡 [Network]: Creds WiFi effacées.");
+    log_i("📡 [Network]: Creds WiFi effacées.");
 }
 
 void NetworkManager::onTriggerHello(VoidCallback cb) { _helloCallback = cb; }
@@ -62,7 +68,7 @@ void NetworkManager::onWeatherUpdate(WeatherCallback cb) { _weatherCallback = cb
 
 void NetworkManager::fetchWeather() {
     if (!_settings->getWeatherEnabled()) {
-        Serial.println("🚫 [Network]: Météo désactivée");
+        log_i("🚫 [Network]: Météo désactivée");
         if (_weatherCallback) _weatherCallback(-1);
         return;
     }
@@ -72,7 +78,7 @@ void NetworkManager::fetchWeather() {
     String lat = _settings->getWeatherLat();
     String lon = _settings->getWeatherLon();
 
-    Serial.println("🌦️ [Network]: Mise à jour Météo...");
+    log_i("🌦️ [Network]: Mise à jour Météo...");
 
     HTTPClient http;
     String url = "http://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current_weather=true";
@@ -316,7 +322,7 @@ void NetworkManager::setupWebServer() {
         response->addHeader("Connection", "close");
         request->send(response);
         if(shouldReboot) {
-            Serial.println("OTA: Succès ! Redémarrage...");
+            log_i("OTA: Succès ! Redémarrage...");
             delay(100);
             ESP.restart();
         }
@@ -342,7 +348,7 @@ void NetworkManager::setupWebServer() {
     });
 
     _server.begin();
-    Serial.println("🌐 [Network]: Serveur Web démarré");
+    log_i("🌐 [Network]: Serveur Web démarré");
 }
 
 String NetworkManager::getIP() { return _connected ? WiFi.localIP().toString() : "0.0.0.0"; }

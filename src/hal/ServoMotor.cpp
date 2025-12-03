@@ -27,12 +27,12 @@ void ServoMotor::setEnabled(bool enabled) {
         _enabled = enabled;
         if (!_enabled) {
             _servo.detach();
-            Serial.println("🛑 [ServoMotor]: Détaché (Disabled)");
+            log_i("🛑 [ServoMotor]: Détaché (Disabled)");
         } else {
             if (!_servo.attached()) {
                 _servo.attach(SERVO_PIN, MIN_PULSE, MAX_PULSE);
                 _servo.write(_currentAngle); 
-                Serial.println("🟢 [ServoMotor]: Ré-attaché (Enabled)");
+                log_i("🟢 [ServoMotor]: Ré-attaché (Enabled)");
             }
         }
         xSemaphoreGive(_mutex);
@@ -130,10 +130,10 @@ void ServoMotor::testSequence() {
     bool wasEnabled = _enabled;
     if (!wasEnabled) setEnabled(true);
 
-    Serial.println("🔧 [Servo]: Test Happy");
+    log_i("🔧 [Servo]: Test Happy");
     animHappy(); delay(500);
     
-    Serial.println("🔧 [Servo]: Test Sad");
+    log_i("🔧 [Servo]: Test Sad");
     animSad(); delay(500);
 
     if (!wasEnabled) setEnabled(false);

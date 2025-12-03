@@ -2,7 +2,6 @@
 #include "SystemTask.h"
 
 void TaskSystem(void *pvParameters) {
-    Serial.println("⚙️ [SysTask] Démarrage Core 0");
     log_i("⚙️ Démarrage Core 0");
 
     majinUSB.begin();
@@ -47,7 +46,6 @@ void TaskSystem(void *pvParameters) {
             }
         }
         else if (event == TOUCH_LONG) {
-            Serial.println("⚙️ [SysTask] Tête: Appui Long détecté !");
             log_i("Tête: Appui Long détecté !");
             RobotCommand cmd = CMD_HEAD_LONG_PRESS;
             xQueueSend(guiQueue, &cmd, 0);
@@ -90,7 +88,6 @@ void TaskSystem(void *pvParameters) {
             
             // On ne tente que si le WiFi est connecté
             if (majinNet.isConnected()) {
-                log_i("🌦️ [System]: Tentative mise à jour météo...");
                 log_i("🌦️ Tentative mise à jour météo...");
                 majinNet.fetchWeather();
             }

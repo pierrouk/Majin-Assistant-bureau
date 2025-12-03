@@ -6,7 +6,7 @@ SettingsManager::SettingsManager() {}
 void SettingsManager::begin() {
     _prefs.begin(_namespace, false);
     _loadCache(); 
-    Serial.println("💾 [Settings]: Mémoire chargée.");
+    log_i("💾 [Settings]: Mémoire chargée.");
 }
 
 void SettingsManager::_loadCache() {
@@ -46,10 +46,10 @@ void SettingsManager::_loadCache() {
 }
 
 void SettingsManager::factoryReset() {
-    Serial.println("⚠️ [Settings]: FACTORY RESET...");
+    log_i("⚠️ [Settings]: FACTORY RESET...");
     _prefs.clear(); 
     _loadCache(); // Recharge les valeurs par défaut
-    Serial.println("💾 [Settings]: Mémoire vidée.");
+    log_i("💾 [Settings]: Mémoire vidée.");
 }
 
 // --- GENERAL ---

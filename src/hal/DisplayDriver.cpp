@@ -6,10 +6,10 @@ DisplayDriver::DisplayDriver() {
 
 bool DisplayDriver::begin() {
     xSemaphoreTake(_mutex, portMAX_DELAY);
-    Serial.println("📺 [Display]: Démarrage...");
+    log_i("📺 [Display]: Démarrage...");
 
     if (!_tft.init()) {
-        Serial.println("🔴 ERREUR [Display]: Échec init LGFX !");
+        log_i("🔴 ERREUR [Display]: Échec init LGFX !");
         xSemaphoreGive(_mutex);
         return false;
     }
@@ -28,7 +28,7 @@ bool DisplayDriver::begin() {
     // _tft.setCursor(10, 10);
     // _tft.println("Majin OS - Booting...");
 
-    Serial.println("⚠️ [SD]: Désactivée pour permettre le boot");
+    log_i("⚠️ [SD]: Désactivée pour permettre le boot");
     _sdInitialized = false;
 
     xSemaphoreGive(_mutex);
@@ -44,7 +44,7 @@ void DisplayDriver::secureDraw(std::function<void(LGFX_Majin*)> drawFunction) {
         drawFunction(&_tft);
         xSemaphoreGive(_mutex);
     } else {
-        Serial.println("⚠️ [Display]: Ecran occupé");
+        log_i("⚠️ [Display]: Ecran occupé");
     }
 }
 
