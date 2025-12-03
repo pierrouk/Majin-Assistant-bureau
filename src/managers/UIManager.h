@@ -25,7 +25,8 @@ public:
     void draw();   
     void setScene(UIScene scene);
     UIScene getScene(); 
-    
+    // 👇 AJOUTE CETTE LIGNE ICI
+    int handleDeckClick(int touchX, int touchY);
     bool handleMenuClick(int touchX, int touchY);
     TamaAction handleTamagotchiClick(int touchX, int touchY);
     void showNotification(String message, uint32_t color, int durationMs);

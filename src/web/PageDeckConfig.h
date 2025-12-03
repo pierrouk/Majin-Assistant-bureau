@@ -13,23 +13,25 @@ public:
         html += R"rawliteral(
         <style>
             .grid-editor { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-            .grid-btn { aspect-ratio: 1; background: #333; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #444; transition: 0.2s; position: relative; }
-            .grid-btn:hover { border-color: var(--primary); }
+            .grid-btn { aspect-ratio: 1; background: #333; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #444; transition: 0.2s; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+            .grid-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
             .grid-btn.active { background: #444; border-color: var(--success); }
-            .grid-label { font-weight: bold; font-size: 0.9rem; color: white; margin-top: 5px; }
-            .grid-icon { font-size: 1.5rem; } /* On utilisera des emojis pour la preview Web */
+            .grid-label { font-weight: bold; font-size: 0.8rem; color: white; margin-top: 5px; text-align:center; overflow:hidden; width:90%; white-space:nowrap; text-overflow:ellipsis; }
+            .grid-icon { font-size: 1.8rem; } 
             
             .pagination { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
             .page-btn { padding: 8px 15px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; border-radius: 4px; text-decoration:none; display:inline-block;}
             .page-btn.active { background: var(--primary); color: black; border-color: var(--primary); font-weight: bold; }
 
-            #edit-form { display: none; background: #222; padding: 15px; border-radius: 8px; border: 1px solid var(--primary); }
-            .color-picker { display: flex; gap: 10px; margin: 10px 0; }
-            .color-opt { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+            #edit-form { display: none; background: #222; padding: 15px; border-radius: 8px; border: 1px solid var(--primary); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+            .color-picker { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+            .color-opt { width: 35px; height: 35px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition:0.2s; }
+            .color-opt:hover { transform:scale(1.1); border-color:white; }
+            
             .mod-group { display: flex; gap: 10px; margin: 10px 0; }
-            .mod-check { background: #333; padding: 8px; border-radius: 4px; cursor: pointer; user-select: none; }
+            .mod-check { background: #333; padding: 8px; border-radius: 4px; cursor: pointer; user-select: none; flex:1; text-align:center; border:1px solid #444; }
             .mod-check input { display: none; }
-            .mod-check input:checked + span { color: var(--primary); font-weight: bold; }
+            .mod-check input:checked + span { color: var(--primary); font-weight: bold; text-shadow: 0 0 5px var(--primary); }
         </style>
         </head><body>)rawliteral";
         
@@ -53,9 +55,10 @@ public:
             <div class="grid-editor">
         )rawliteral";
 
-        // Map Emojis pour preview Web
-        // 0:Txt, 1:Play, 2:Mute, 3:Cam, 4:Mic, 5:Obs, 6:File, 7:Save, 8:Home, 9:Chat
-        String icons[] = {"T", "▶️", "🔇", "📷", "🎤", "🔴", "📄", "💾", "🏠", "💬"};
+        String icons[] = {
+            "T", "▶️", "🔀", "📷", "🎤", "🔴", "📄", "💾", "🏠", "💬", 
+            "🎮", "🎥", "🌐", "📁", "🔇", "🚫" 
+        };
 
         for (int i = 0; i < 6; i++) {
             int globalIdx = (pageIndex * 6) + i;
@@ -69,12 +72,18 @@ public:
             else if (btn.color == 0xFFE0) colorHex = "#FFA500"; 
 
             String label = String(btn.label);
-            String iconSymbol = (btn.iconID < 10) ? icons[btn.iconID] : "T";
-            if (!btn.active) { label = "+"; iconSymbol = ""; }
+            int iconId = btn.iconID;
+            if (iconId > 15) iconId = 0;
+            String iconSymbol = (iconId > 0) ? icons[iconId] : "T";
+            
+            if (!btn.active) { label = "Vide"; iconSymbol = "+"; }
             
             html += "<div class='grid-btn' onclick='editBtn(" + String(globalIdx) + ")' style='border-color:" + colorHex + "'>";
-            if(btn.active && btn.iconID > 0) html += "<span class='grid-icon'>" + iconSymbol + "</span>";
-            html += "<span class='grid-label' style='color:" + colorHex + "'>" + label + "</span>";
+            if(btn.active && btn.iconID > 0) html += "<span class='grid-icon' style='color:" + colorHex + "'>" + iconSymbol + "</span>";
+            else if (!btn.active) html += "<span class='grid-icon' style='color:#666'>+</span>";
+            
+            // ⚠️ CORRECTION ICI : Ajout de String() autour de la condition ternaire
+            html += "<span class='grid-label' style='color:" + String(btn.active ? "white" : "#666") + "'>" + label + "</span>";
             html += "</div>";
         }
 
@@ -82,51 +91,63 @@ public:
             </div>
 
             <div id="edit-form">
-                <h3 style="margin-top:0">Éditer Bouton #<span id="edit-id-disp"></span></h3>
+                <h3 style="margin-top:0; color:var(--primary);">Éditer Bouton #<span id="edit-id-disp"></span></h3>
                 <input type="hidden" id="edit-id">
                 
-                <label>Label</label>
-                <input type="text" id="edit-label" maxlength="8">
+                <label>Nom du Bouton</label>
+                <input type="text" id="edit-label" maxlength="9" placeholder="Ex: OBS Scene">
                 
                 <label>Icône</label>
                 <select id="edit-icon">
                     <option value="0">Aucune (Texte seul)</option>
-                    <option value="1">Play ▶️</option>
-                    <option value="2">Mute 🔇</option>
-                    <option value="3">Caméra 📷</option>
-                    <option value="4">Micro 🎤</option>
-                    <option value="5">Rec/OBS 🔴</option>
-                    <option value="6">Fichier 📄</option>
-                    <option value="7">Save 💾</option>
-                    <option value="8">Home 🏠</option>
-                    <option value="9">Chat 💬</option>
+                    <optgroup label="Contrôle">
+                        <option value="1">Play ▶️</option>
+                        <option value="2">Shuffle 🔀</option>
+                        <option value="5">Rec 🔴</option>
+                        <option value="7">Save 💾</option>
+                        <option value="8">Home 🏠</option>
+                    </optgroup>
+                    <optgroup label="Streaming & Social">
+                        <option value="3">Caméra On 📷</option>
+                        <option value="15">Caméra Off 🚫</option>
+                        <option value="4">Micro On 🎤</option>
+                        <option value="14">Micro Mute 🔇</option>
+                        <option value="11">OBS Studio 🎥</option>
+                        <option value="10">Discord 🎮</option>
+                        <option value="9">Chat 💬</option>
+                    </optgroup>
+                    <optgroup label="Système">
+                        <option value="12">Chrome / Web 🌐</option>
+                        <option value="13">Dossier 📁</option>
+                        <option value="6">Fichier 📄</option>
+                    </optgroup>
                 </select>
 
-                <label>Raccourci</label>
+                <label>Raccourci Clavier</label>
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="edit-key" maxlength="1" placeholder="Touche" style="width: 100px;">
-                    <div class="mod-group">
+                    <div class="mod-group" style="flex:2;">
                         <label class="mod-check"><input type="checkbox" id="mod-ctrl"><span>CTRL</span></label>
                         <label class="mod-check"><input type="checkbox" id="mod-shift"><span>SHIFT</span></label>
                         <label class="mod-check"><input type="checkbox" id="mod-alt"><span>ALT</span></label>
                     </div>
+                    <input type="text" id="edit-key" maxlength="1" placeholder="Touche" style="flex:1; text-align:center; font-weight:bold; text-transform:uppercase;">
                 </div>
 
-                <label>Couleur</label>
+                <label>Couleur Néon</label>
                 <div class="color-picker">
-                    <div class="color-opt" style="background:#00F0FF" onclick="setColor(2015)"></div>
-                    <div class="color-opt" style="background:#FF0055" onclick="setColor(63562)"></div>
-                    <div class="color-opt" style="background:#00FF99" onclick="setColor(2035)"></div>
-                    <div class="color-opt" style="background:#FF3333" onclick="setColor(63878)"></div>
-                    <div class="color-opt" style="background:#FFA500" onclick="setColor(65504)"></div>
+                    <div class="color-opt" style="background:#00F0FF; box-shadow:0 0 10px #00F0FF;" onclick="setColor(2015)"></div>
+                    <div class="color-opt" style="background:#FF0055; box-shadow:0 0 10px #FF0055;" onclick="setColor(63562)"></div>
+                    <div class="color-opt" style="background:#00FF99; box-shadow:0 0 10px #00FF99;" onclick="setColor(2035)"></div>
+                    <div class="color-opt" style="background:#FF3333; box-shadow:0 0 10px #FF3333;" onclick="setColor(63878)"></div>
+                    <div class="color-opt" style="background:#FFA500; box-shadow:0 0 10px #FFA500;" onclick="setColor(65504)"></div>
                 </div>
                 <input type="hidden" id="edit-color">
 
-                <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button onclick="saveBtn()">Enregistrer</button>
-                    <button class="btn-warning" onclick="closeEdit()">Annuler</button>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button onclick="saveBtn()" style="flex:2;">Sauvegarder</button>
+                    <button class="btn-warning" onclick="closeEdit()" style="flex:1;">Annuler</button>
                 </div>
-                <button class="btn-danger" onclick="clearBtn()" style="margin-top:10px;">Effacer</button>
+                <button class="btn-danger" onclick="clearBtn()" style="margin-top:10px; width:100%;">Effacer le bouton</button>
             </div>
         </div>
         )rawliteral";
@@ -143,7 +164,7 @@ public:
                 document.getElementById('edit-key').value = "";
                 document.getElementById('edit-icon').value = "0";
                 ['mod-ctrl','mod-shift','mod-alt'].forEach(id => document.getElementById(id).checked = false);
-                window.scrollTo(0, document.body.scrollHeight);
+                document.getElementById('edit-form').scrollIntoView({behavior: "smooth"});
             }
             function setColor(val) { document.getElementById('edit-color').value = val; }
             function closeEdit() { document.getElementById('edit-form').style.display = 'none'; }
@@ -156,12 +177,15 @@ public:
                 var ctrl = document.getElementById('mod-ctrl').checked ? '1' : '0';
                 var shift = document.getElementById('mod-shift').checked ? '1' : '0';
                 var alt = document.getElementById('mod-alt').checked ? '1' : '0';
-                var url = `/api/deck/set?id=${id}&label=${label}&icon=${icon}&key=${key}&color=${color}&ctrl=${ctrl}&shift=${shift}&alt=${alt}`;
-                fetch(url, {method: 'POST'}).then(() => location.reload());
+                if(!label && !key) { alert("Il faut au moins un nom ou une touche !"); return; }
+                var url = `/api/deck/set?id=${id}&label=${encodeURIComponent(label)}&icon=${icon}&key=${encodeURIComponent(key)}&color=${color}&ctrl=${ctrl}&shift=${shift}&alt=${alt}`;
+                fetch(url, {method: 'POST'}).then(r => { if(r.ok) location.reload(); else alert("Erreur sauvegarde"); });
             }
             function clearBtn() {
-                 var id = document.getElementById('edit-id').value;
-                 fetch(`/api/deck/set?id=${id}&active=0`, {method: 'POST'}).then(() => location.reload());
+                 if(confirm("Effacer ce bouton ?")) {
+                     var id = document.getElementById('edit-id').value;
+                     fetch(`/api/deck/set?id=${id}&active=0`, {method: 'POST'}).then(() => location.reload());
+                 }
             }
         </script>
         </body></html>)rawliteral";

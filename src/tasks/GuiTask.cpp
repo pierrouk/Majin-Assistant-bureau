@@ -172,26 +172,21 @@ void TaskGUI(void *pvParameters) {
                 // Navigation Pages
                 else if (gesture == GESTURE_SWIPE_LEFT) { majinUI.nextDeckPage(); majinVoice.playNotification(); }
                 else if (gesture == GESTURE_SWIPE_RIGHT) { majinUI.prevDeckPage(); majinVoice.playNotification(); }
+                
+                // 👇 C'EST ICI QUE CA CHANGE (Beaucoup plus propre !)
                 else if (gesture == GESTURE_TAP) {
-                    // Logique Grille 3x2
-                    int startX = 25; int startY = 50; int btnW = 80; int btnH = 60; int gap = 15;
-                    int col = -1; int row = -1;
-                    if (touchX > startX && touchX < startX + btnW) col = 0;
-                    else if (touchX > startX + btnW + gap && touchX < startX + 2*btnW + gap) col = 1;
-                    else if (touchX > startX + 2*(btnW + gap) && touchX < startX + 3*btnW + 2*gap) col = 2;
-                    if (touchY > startY && touchY < startY + btnH) row = 0;
-                    else if (touchY > startY + btnH + gap && touchY < startY + 2*btnH + gap) row = 1;
-
-                    if (col != -1 && row != -1) {
-                        int index = (majinUI.getDeckPage() * 6) + (row * 3 + col);
-                        DeckButton btn = majinSettings.getDeckButton(index);
-                        if (btn.active) {
-                            majinUI.showNotification(String(btn.label), btn.color, 500);
-                            majinUSB.sendShortcut(btn.key, btn.ctrl, btn.shift, btn.alt);
-                            majinVoice.playSuccess();
-                        } else {
-                            majinUI.showNotification("VIDE", 0x5555, 500);
-                        }
+                    // On demande au Manager : "Sur quel bouton j'ai appuyé ?"
+                    int btnIndex = majinUI.handleDeckClick(touchX, touchY);
+                    
+                    if (btnIndex != -1) {
+                        // Un bouton a été trouvé !
+                        DeckButton btn = majinSettings.getDeckButton(btnIndex);
+                        
+                        // Envoi du raccourci clavier
+                        majinUSB.sendShortcut(btn.key, btn.ctrl, btn.shift, btn.alt);
+                        
+                        // Feedback sonore
+                        majinVoice.playSuccess();
                     }
                 }
             }

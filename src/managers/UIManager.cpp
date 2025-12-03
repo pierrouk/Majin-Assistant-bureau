@@ -29,23 +29,48 @@ void UIManager::_initApps() {
     _apps.push_back({"System", COLOR_SUCCESS, 240, 200, 30, SCENE_SETTINGS});
 }
 
-// --- HELPER DECK ---
+// --- HELPER DECK ICONES ÉTENDU ---
 static void _drawDeckIcon(LGFX_Sprite* spr, int id, int x, int y, uint16_t color) {
     spr->setTextColor(color);
     switch (id) {
-        case 1: spr->fillTriangle(x-5, y-8, x-5, y+8, x+8, y, color); break; 
-        case 2: spr->fillTriangle(x-8, y, x-2, y-6, x-2, y+6, color); spr->fillRect(x-8, y-2, 4, 4, color); spr->drawLine(x, y-6, x+8, y+6, color); spr->drawLine(x, y+6, x+8, y-6, color); break; 
-        case 3: spr->fillRoundRect(x-10, y-6, 16, 12, 2, color); spr->fillTriangle(x+6, y-3, x+6, y+3, x+10, y-5, color); break; 
-        case 4: spr->fillRoundRect(x-3, y-8, 6, 12, 3, color); spr->drawArc(x, y-2, 8, 6, 45, 315, color); spr->drawLine(x, y+6, x, y+10, color); break; 
-        case 5: spr->fillCircle(x, y, 8, color); break; 
-        case 6: spr->fillRect(x-6, y-8, 12, 16, color); spr->fillTriangle(x+6, y-8, x+6, y-2, x, y-8, 0x0000); break; 
-        case 7: spr->fillRect(x-8, y-8, 16, 16, color); spr->fillRect(x-4, y-8, 8, 6, 0x0000); break; 
-        case 8: spr->fillTriangle(x, y-10, x-10, y, x+10, y, color); spr->fillRect(x-6, y, 12, 8, color); break; 
-        case 9: spr->fillRoundRect(x-10, y-8, 20, 14, 4, color); spr->fillTriangle(x-5, y+6, x+5, y+6, x-2, y+10, color); break; 
-        default: break;
+        // --- Icones Existantes (1-9) ---
+        case 1: spr->fillTriangle(x-5, y-8, x-5, y+8, x+8, y, color); break; // Play
+        case 2: spr->fillTriangle(x-8, y, x-2, y-6, x-2, y+6, color); spr->fillRect(x-8, y-2, 4, 4, color); spr->drawLine(x, y-6, x+8, y+6, color); spr->drawLine(x, y+6, x+8, y-6, color); break; // Shuffle
+        case 3: spr->fillRoundRect(x-10, y-6, 16, 12, 2, color); spr->fillTriangle(x+6, y-3, x+6, y+3, x+10, y-5, color); break; // Caméra
+        case 4: spr->fillRoundRect(x-3, y-8, 6, 12, 3, color); spr->drawArc(x, y-2, 8, 6, 45, 315, color); spr->drawLine(x, y+6, x, y+10, color); break; // Micro
+        case 5: spr->fillCircle(x, y, 8, color); break; // Record
+        case 6: spr->fillRect(x-6, y-8, 12, 16, color); spr->fillTriangle(x+6, y-8, x+6, y-2, x, y-8, 0x0000); break; // Note
+        case 7: spr->fillRect(x-8, y-8, 16, 16, color); spr->fillRect(x-4, y-8, 8, 6, 0x0000); break; // Terminal
+        case 8: spr->fillTriangle(x, y-10, x-10, y, x+10, y, color); spr->fillRect(x-6, y, 12, 8, color); break; // Home
+        case 9: spr->fillRoundRect(x-10, y-8, 20, 14, 4, color); spr->fillTriangle(x-5, y+6, x+5, y+6, x-2, y+10, color); break; // Message
+        
+        // --- NOUVELLES ICONES (10-15) ---
+        case 10: // Discord (Style manette)
+            spr->fillRoundRect(x-9, y-7, 18, 14, 4, color); spr->fillCircle(x-4, y-1, 2, 0x0000); spr->fillCircle(x+4, y-1, 2, 0x0000);
+            break;
+        case 11: // OBS (Cercle + diaphragme)
+            spr->drawCircle(x, y, 9, color); spr->drawCircle(x, y, 3, color);
+            spr->drawLine(x, y-3, x, y-9, color); spr->drawLine(x-2, y+2, x-7, y+6, color); spr->drawLine(x+2, y+2, x+7, y+6, color);
+            break;
+        case 12: // Chrome/Web (Cercle + segments)
+            spr->drawCircle(x, y, 9, color); spr->fillCircle(x, y, 3, color);
+            spr->drawLine(x, y, x+9, y, color); spr->drawLine(x, y, x-5, y-8, color); spr->drawLine(x, y, x-5, y+8, color);
+            break;
+        case 13: // Dossier
+            spr->fillRect(x-9, y-6, 18, 12, color); spr->fillRect(x-9, y-9, 8, 3, color);
+            break;
+        case 14: // Mic Mute (Micro barré)
+            spr->fillRoundRect(x-3, y-8, 6, 12, 3, color); spr->drawArc(x, y-2, 8, 6, 45, 315, color); 
+            spr->drawLine(x-8, y-8, x+8, y+8, COLOR_DANGER); // Barre rouge
+            break;
+        case 15: // Cam Off (Caméra barrée)
+             spr->fillRoundRect(x-10, y-6, 16, 12, 2, color); spr->fillTriangle(x+6, y-3, x+6, y+3, x+10, y-5, color);
+             spr->drawLine(x-10, y-5, x+8, y+5, COLOR_DANGER); // Barre rouge
+             break;
+
+        default: break; // Pas d'icône
     }
 }
-
 // --- HELPER EVENT (Corrigé) ---
 static void _drawEventIcon(LGFX_Sprite* spr, int type, int x, int y, uint16_t color) {
     switch (type) {
@@ -305,20 +330,77 @@ void UIManager::_drawAppTrackpad() {
     _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(0xCE79); _mainSprite.drawString("Appui Long pour quitter", 160, 200); 
 }
 
+// 🕸️ NOUVEAU STREAM DECK (STYLE FLAT DESIGN / WEB)
 void UIManager::_drawAppStreamDeck() {
-    _mainSprite.fillScreen(COLOR_BG); 
-    _mainSprite.setTextColor(COLOR_WHITE); _mainSprite.setFont(FONT_TITLE); _mainSprite.drawString("STREAM DECK", 160, 20); _mainSprite.setFont(FONT_UI); 
-    int startX = 25; int startY = 50; int btnW = 80; int btnH = 60; int gap = 15; int startIndex = _currentDeckPage * 6; 
+    // Fond noir uni
+    _mainSprite.fillScreen(TFT_BLACK); 
+    
+    // Titre et Pagination
+    _mainSprite.setTextColor(COLOR_WHITE); 
+    _mainSprite.setFont(FONT_UI); 
+    _mainSprite.setTextDatum(top_center); 
+    _mainSprite.drawString("DECK PAGE " + String(_currentDeckPage + 1) + "/4", 160, 15);
+
+    // Configuration Grille Hexagonale (Quinconce)
+    int radius = 38;       // Rayon
+    int startX = 75;       // Pos X départ
+    int startY = 85;       // Pos Y départ
+    int gapX = 85;         // Ecart H
+    int gapY = 75;         // Ecart V
+    
+    int startIndex = _currentDeckPage * 6; 
+
     for(int i=0; i<6; i++) { 
-        int col = i % 3; int row = i / 3; int x = startX + col * (btnW + gap); int y = startY + row * (btnH + gap); DeckButton btn = _settings->getDeckButton(startIndex + i); 
+        int row = i / 3; 
+        int col = i % 3;
+        
+        int cx = startX + col * gapX;
+        int cy = startY + row * gapY;
+        
+        // Décalage rangée 2
+        if (row == 1) cx += gapX / 2; 
+
+        DeckButton btn = _settings->getDeckButton(startIndex + i); 
+
         if (btn.active) { 
-            _mainSprite.fillRoundRect(x, y, btnW, btnH, 8, btn.color); _mainSprite.drawRoundRect(x, y, btnW, btnH, 8, COLOR_WHITE); 
-            if (btn.iconID > 0) { _drawDeckIcon(&_mainSprite, btn.iconID, x + btnW/2, y + btnH/2 - 5, COLOR_BLACK); _mainSprite.setTextDatum(bottom_center); _mainSprite.setTextColor(COLOR_BLACK); _mainSprite.setFont(FONT_SMALL); _mainSprite.drawString(btn.label, x + btnW/2, y + btnH - 5); } 
-            else { _mainSprite.setTextDatum(middle_center); _mainSprite.setTextColor(COLOR_BLACK); _mainSprite.setFont(FONT_UI); _mainSprite.drawString(btn.label, x + btnW/2, y + btnH/2); } 
-        } else { _mainSprite.drawRoundRect(x, y, btnW, btnH, 8, 0x3333); _mainSprite.setTextColor(0x5555); _mainSprite.setTextDatum(middle_center); _mainSprite.drawString("+", x + btnW/2, y + btnH/2); } 
+            // --- STYLE FLAT : Hexagone rempli couleur SANS contour ---
+            _drawHexagon(&_mainSprite, cx, cy, radius, btn.color, true);
+
+            // Contenu en BLANC (pour contraster sur le fond coloré)
+            if (btn.iconID > 0) { 
+                // Icône Blanche
+                _drawDeckIcon(&_mainSprite, btn.iconID, cx, cy - 5, COLOR_WHITE); 
+                
+                // Texte Blanc en dessous
+                _mainSprite.setTextDatum(bottom_center); 
+                _mainSprite.setTextColor(COLOR_WHITE); 
+                _mainSprite.setFont(FONT_SMALL); 
+                _mainSprite.drawString(btn.label, cx, cy + 15); 
+            } else { 
+                // Texte seul Blanc centré
+                _mainSprite.setTextDatum(middle_center); 
+                _mainSprite.setTextColor(COLOR_WHITE); 
+                _mainSprite.setFont(FONT_UI); 
+                _mainSprite.drawString(btn.label, cx, cy); 
+            } 
+        } else { 
+            // --- BOUTON VIDE (Flat Gris) ---
+            // Un gris moyen plat (ex: 0x2945) pour le fond, sans contour
+            _drawHexagon(&_mainSprite, cx, cy, radius, 0x2945, true); 
+            
+            // Le "+" en gris plus clair
+            _mainSprite.setTextColor(0x5555); 
+            _mainSprite.setTextDatum(middle_center); 
+            _mainSprite.setFont(FONT_UI);
+            _mainSprite.drawString("+", cx, cy); 
+        } 
     } 
-    int dotY = 200; for(int p=0; p<4; p++) { uint16_t color = (p == _currentDeckPage) ? COLOR_PRIMARY : 0x3333; _mainSprite.fillCircle(160 - 30 + (p*20), dotY, 4, color); } 
-    _mainSprite.setFont(FONT_SMALL); _mainSprite.setTextColor(0xCE79); _mainSprite.setTextDatum(bottom_center); _mainSprite.drawString("Swipe < >", 160, 230); 
+
+    // Indicateur swipe bas
+    _mainSprite.setFont(FONT_SMALL); 
+    _mainSprite.setTextColor(0x5555); // Gris discret
+    _mainSprite.setTextDatum(bottom_center); 
+    _mainSprite.drawString("< Swipe >", 160, 235); 
 }
 
 void UIManager::_drawTamaMenu() { 
@@ -389,7 +471,52 @@ void UIManager::update() {
         _notifDuration = 0; 
     }
 }
+// 🕸️ NOUVELLE GESTION CLICS HEXAGONAUX (STREAM DECK)
+int UIManager::handleDeckClick(int touchX, int touchY) {
+    if (_currentScene != SCENE_APP_STREAMDECK) return -1;
 
+    // Configuration IDENTIQUE à celle du dessin (_drawAppStreamDeck)
+    int radius = 38;
+    int startX = 75;
+    int startY = 85;
+    int gapX = 85;
+    int gapY = 75;
+
+    // Rayon de détection au carré (pour éviter les racines carrées lentes)
+    // On prend un peu moins que le vrai rayon pour ne pas cliquer sur les bords
+    long detectRadiusSq = (radius - 5) * (radius - 5); 
+
+    for(int i=0; i<6; i++) {
+        int row = i / 3;
+        int col = i % 3;
+        
+        // Calcul du centre de l'hexagone théorique
+        int cx = startX + col * gapX;
+        int cy = startY + row * gapY;
+        
+        // Décalage de la deuxième rangée (quinconce)
+        if (row == 1) cx += gapX / 2; 
+
+        // Calcul de distance (Pythagore)
+        long dx = touchX - cx;
+        long dy = touchY - cy;
+        long distSq = dx*dx + dy*dy;
+
+        // Si la distance est inférieure au rayon, c'est touché !
+        if (distSq < detectRadiusSq) {
+            int globalIndex = (_currentDeckPage * 6) + i;
+            DeckButton btn = _settings->getDeckButton(globalIndex);
+            
+            // On ne renvoie l'index que si le bouton est configuré/actif
+            if (btn.active) {
+                // Petit effet visuel flash sur la notif
+                showNotification("ACTION " + String(btn.label), btn.color, 1000);
+                return globalIndex; // BINGO !
+            }
+        }
+    }
+    return -1; // Rien touché
+}
 // 🕸️ INTERACTION MENU HEXAGONAL
 bool UIManager::handleMenuClick(int touchX, int touchY) { 
     if (_currentScene != SCENE_MENU) return false; 
