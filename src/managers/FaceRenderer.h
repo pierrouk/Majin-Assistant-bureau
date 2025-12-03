@@ -5,8 +5,9 @@
 #include <LovyanGFX.hpp>
 #include "CoreManager.h"
 #include "SettingsManager.h"
+#include "../faces/FaceStructs.h"
 
-// ⚠️ INCLUSIONS OBLIGATOIRES DES VISAGES
+// Inclusions modulaires
 #include "../faces/FaceNormal.h"
 #include "../faces/FaceHappy.h"
 #include "../faces/FaceAngry.h"
@@ -14,14 +15,9 @@
 #include "../faces/FaceLove.h"
 #include "../faces/FaceSad.h"
 
-// 👾 CONFIGURATION GRILLE
-#define BLOCK_SIZE 12    
-#define BLOCK_GAP  1     
-
 class FaceRenderer {
 public:
     FaceRenderer();
-
     void begin(CoreManager* core, SettingsManager* settings);
     void update();
     void draw(LGFX_Sprite* mainSprite);
@@ -30,25 +26,30 @@ private:
     CoreManager* _core;
     SettingsManager* _settings;
 
-    // Variables d'Animation
+    const int EYE_WIDTH_BASE = 50; const int EYE_HEIGHT_BASE = 80; const int EYE_SPACING = 35;      
+
+    // Animation Visage
     unsigned long _lastBlinkTime = 0;
     bool _isBlinking = false;
-    
-    float _currentEyeX = 0; 
-    float _currentEyeY = 0; 
-    float _targetEyeX = 0; 
-    float _targetEyeY = 0;
+    float _blinkProgress = 0.0;
+    float _currentGazeX = 0; float _currentGazeY = 0; 
+    float _targetGazeX = 0; float _targetGazeY = 0;
     unsigned long _lastGazeChange = 0;
-    
-    float _currentEyeHeight = 120; 
+    float _hoverPhase = 0.0;
+    float _hoverOffsetY = 0.0; float _hoverOffsetX = 0.0;
 
-    // Helper Dessin Brique
-    void _drawSingleBrick(LGFX_Sprite* spr, int x, int y, uint16_t color);
+    // 💬 SYSTEME DE BULLE (Speech Bubble)
+    unsigned long _lastSpeechChange = 0;
+    int _speechIndex = 0;
+    String _currentSpeech = "";
     
-    // Bulles
-    void _drawBubbles(LGFX_Sprite* spr, int leftX, int rightX, int centerY);
+    // Helpers
+    void _drawRobotMouth(LGFX_Sprite* spr, int cx, int cy, MoodState mood);
+    void _drawBubbles(LGFX_Sprite* spr, int cx, int topY);
     void _drawHungerBubble(LGFX_Sprite* spr, int x, int y);
     void _drawSleepBubble(LGFX_Sprite* spr, int x, int y);
+    
+    // Nouvelle fonction
+    void _drawSpeechBubble(LGFX_Sprite* spr, int x, int y, String text);
 };
-
 #endif

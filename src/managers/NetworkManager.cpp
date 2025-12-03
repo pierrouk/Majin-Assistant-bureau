@@ -1,5 +1,5 @@
 #include "NetworkManager.h"
-#include <Update.h> // ⬅️ INDISPENSABLE POUR OTA
+#include <Update.h> 
 
 NetworkManager::NetworkManager() : _server(80) {
 }
@@ -20,12 +20,15 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
     wifiManager.setMenu(menu);
     wifiManager.setTitle("Majin OS Setup");
     wifiManager.setDebugOutput(false); 
-    wifiManager.setConfigPortalTimeout(180);
+    
+    // Timeout Infini (0) pour éviter le reboot
+    wifiManager.setConfigPortalTimeout(0);
 
     String currentName = settings->getRobotName();
     WiFiManagerParameter custom_robot_name("robot_name", "Donne-moi un nom (Requis)", currentName.c_str(), 32);
     wifiManager.addParameter(&custom_robot_name);
 
+    // Tentative de connexion
     bool res = wifiManager.autoConnect("Majin_Setup", "majin1234");
 
     if(!res) {
@@ -108,6 +111,7 @@ void NetworkManager::setupWebServer() {
 
     _server.on("/settings", HTTP_GET, [this](AsyncWebServerRequest *request){ request->send(200, "text/html", PageSettings::getHTML()); });
 
+    // PAGE PERSONNALISATION (Mise à jour avec Calibration Lumière)
     _server.on("/perso", HTTP_GET, [this](AsyncWebServerRequest *request){
         bool t = _settings->getShowTime();
         bool s = _settings->getShowSensors();
@@ -117,11 +121,23 @@ void NetworkManager::setupWebServer() {
         String city = _settings->getCityName();
         String boot = _settings->getBootLogoText();
         int mood = _settings->getManualMood();
-        request->send(200, "text/html", PagePersonalization::getHTML(t, s, lat, lon, en, city, boot, mood));
+        
+        // Nouvelles variables Calibration
+        float sleepTh = _settings->getAutoSleepThreshold();
+        int scrMin = _settings->getScreenMin();
+        int scrMax = _settings->getScreenMax();
+
+        request->send(200, "text/html", PagePersonalization::getHTML(t, s, lat, lon, en, city, boot, mood, sleepTh, scrMin, scrMax));
     });
 
+   // Et mettre à jour l'appel d'affichage de la page HTML
     _server.on("/countdown", HTTP_GET, [this](AsyncWebServerRequest *request){
-        request->send(200, "text/html", PageCountdown::getHTML(_settings->getEventName(), _settings->getEventTimestamp(), _settings->getEventType()));
+        request->send(200, "text/html", PageCountdown::getHTML(
+            _settings->getEventName(), 
+            _settings->getEventTimestamp(), 
+            _settings->getEventType(),
+            _settings->getEventHolidays() // Nouvel argument
+        ));
     });
 
     _server.on("/tamagotchi", HTTP_GET, [this](AsyncWebServerRequest *request){ request->send(200, "text/html", PageTamagotchi::getHTML()); });
@@ -180,6 +196,20 @@ void NetworkManager::setupWebServer() {
         } else { request->send(400); }
     });
 
+    // 💡 NOUVELLE ROUTE API : CALIBRATION LUMIÈRE
+    _server.on("/api/config/light", HTTP_POST, [this](AsyncWebServerRequest *request){
+        if (request->hasParam("th") && request->hasParam("min") && request->hasParam("max")) {
+            float th = request->getParam("th")->value().toFloat();
+            int min = request->getParam("min")->value().toInt();
+            int max = request->getParam("max")->value().toInt();
+            
+            _settings->setAutoSleepThreshold(th);
+            _settings->setScreenMinMax(min, max);
+            
+            request->send(200, "text/plain", "OK");
+        } else { request->send(400); }
+    });
+
     _server.on("/api/config/weather", HTTP_POST, [this](AsyncWebServerRequest *request){
         if (request->hasParam("lat")) {
             _settings->setWeatherLat(request->getParam("lat")->value());
@@ -216,12 +246,24 @@ void NetworkManager::setupWebServer() {
             String name = request->getParam("name", true)->value();
             String tsStr = request->getParam("timestamp", true)->value();
             String typeStr = request->hasParam("type", true) ? request->getParam("type", true)->value() : "0";
+            
+            // NOUVEAU PARAM
+            String holStr = request->hasParam("holidays", true) ? request->getParam("holidays", true)->value() : "0";
+            
             unsigned long ts = strtoul(tsStr.c_str(), NULL, 10);
             int type = typeStr.toInt();
-            _settings->setEventName(name); _settings->setEventTimestamp(ts); _settings->setEventType(type);
+            int holidays = holStr.toInt();
+            
+            _settings->setEventName(name); 
+            _settings->setEventTimestamp(ts); 
+            _settings->setEventType(type);
+            _settings->setEventHolidays(holidays); // Sauvegarde
+            
             request->redirect("/countdown");
         } else { request->send(400); }
     });
+
+    
 
     _server.on("/api/countdown/delete", HTTP_POST, [this](AsyncWebServerRequest *request){
         _settings->setEventName(""); _settings->setEventTimestamp(0); request->send(200, "text/plain", "Deleted");
@@ -268,7 +310,6 @@ void NetworkManager::setupWebServer() {
     _server.on("/api/wifi/reset", HTTP_POST, [this](AsyncWebServerRequest *request){ request->send(200); delay(500); resetWiFi(); ESP.restart(); });
     _server.on("/api/reset", HTTP_POST, [this](AsyncWebServerRequest *request){ request->send(200); delay(500); resetWiFi(); _settings->factoryReset(); ESP.restart(); });
 
-    // ⬅️ NOUVEAU : Route de mise à jour OTA
     _server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request){
         bool shouldReboot = !Update.hasError();
         AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", shouldReboot ? "OK" : "FAIL");
@@ -282,7 +323,6 @@ void NetworkManager::setupWebServer() {
     }, [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
         if(!index){
             Serial.printf("OTA: Début mise à jour: %s\n", filename.c_str());
-            // Si pas assez de place pour OTA (taille max approx partition app)
             if(!Update.begin((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000)){
                 Update.printError(Serial);
             }

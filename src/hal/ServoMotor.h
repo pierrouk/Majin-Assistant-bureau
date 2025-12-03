@@ -16,14 +16,27 @@ public:
     void setEnabled(bool enabled);
     bool isEnabled();
 
+    // Mouvements Basiques
     void setAngle(int angle);
     int getAngle();
+    
+    // 💃 MOUVEMENTS AVANCÉS (Animations bloquantes)
+    void moveSmooth(int targetAngle, int speedDelay); // Mouvement lent
+    void shake(int repetitions, int range, int speedDelay); // Secousse
+
+    // 🎭 CHOREGRAPHIES EMOTIONNELLES
+    void animHappy();
+    void animAngry();
+    void animSad();
+    void animSleep();
+    void animWake();
+
     void testSequence();
 
 private:
     Servo _servo;
     int _currentAngle;
-    bool _enabled = true; // Par défaut
+    bool _enabled = true; 
     
     SemaphoreHandle_t _mutex;
     

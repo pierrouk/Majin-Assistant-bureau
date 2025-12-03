@@ -8,22 +8,18 @@ void CountdownRenderer::begin(CoreManager* core, SettingsManager* settings) {
 }
 
 void CountdownRenderer::draw(LGFX_Sprite* spr) {
-    // 1. Fond
     spr->fillScreen(COLOR_BG);
 
-    // Récupération données
     String name = _settings->getEventName();
     unsigned long target = _settings->getEventTimestamp();
     int type = _settings->getEventType();
+    int userHolidays = _settings->getEventHolidays(); 
 
     time_t now; 
     time(&now);
     long remaining = target - now;
 
-    // Centre horizontal
     int cx = 160;
-
-    // --- A. ICÔNE EN HAUT (Remontée un peu : Y=40) ---
     int iconY = 40;
     switch (type) {
         case 1: _drawIconBirthday(spr, cx, iconY); break;
@@ -34,64 +30,67 @@ void CountdownRenderer::draw(LGFX_Sprite* spr) {
         default: _drawIconGeneric(spr, cx, iconY); break;
     }
 
-    // --- B. COMPTEUR PRINCIPAL ---
     if (remaining <= 0) {
         spr->setTextColor(COLOR_SUCCESS);
-        spr->setFont(FONT_TITLE);
-        spr->setTextSize(2);
-        spr->setTextDatum(middle_center);
+        spr->setFont(FONT_TITLE); spr->setTextSize(2); spr->setTextDatum(middle_center);
         spr->drawString("JOUR J !", cx, 120);
-        
-        spr->setFont(FONT_UI);
-        spr->setTextSize(1);
-        spr->setTextColor(COLOR_WHITE);
+        spr->setFont(FONT_UI); spr->setTextSize(1); spr->setTextColor(COLOR_WHITE);
         spr->drawString("Evenement en cours", cx, 160);
     } else {
-        int days = remaining / 86400;
+        // --- CALCULS ---
+        int totalDays = remaining / 86400;
         int hours = (remaining % 86400) / 3600;
         int mins = (remaining % 3600) / 60;
         int secs = remaining % 60;
+
+        // Calcul Jours Ouvrés
+        int workingDays = 0;
+        time_t tempTime = now;
+        struct tm* tm_info;
+        for(int i=0; i < totalDays; i++) {
+            tempTime += 86400; 
+            tm_info = localtime(&tempTime);
+            if (tm_info->tm_wday != 0 && tm_info->tm_wday != 6) workingDays++;
+        }
+        int finalWorkDays = workingDays - userHolidays;
+        if (finalWorkDays < 0) finalWorkDays = 0;
+
+        // --- AFFICHAGE ---
         
-        // 1. Nombre de Jours (GROS) - Y=100
+        // 1. Total Jours (Gauche)
         spr->setTextColor(COLOR_WHITE);
-        spr->setFont(FONT_TITLE);
-        spr->setTextSize(3); 
-        spr->setTextDatum(middle_center);
-        spr->drawString(String(days), cx, 100);
+        spr->setFont(FONT_TITLE); spr->setTextSize(3); spr->setTextDatum(middle_center);
+        spr->drawString(String(totalDays), cx - 40, 100); 
 
-        // 2. Label "JOURS" - Y=135
-        spr->setFont(FONT_UI);
-        spr->setTextSize(1);
-        spr->setTextColor(0xCE79); // Gris clair
-        spr->drawString("JOURS", cx, 135);
+        spr->setFont(FONT_SMALL); spr->setTextSize(1); spr->setTextColor(0x8410); // Gris
+        spr->drawString("Total Jours", cx - 40, 135);
 
-        // 3. Décompte Précis (H:M:S) - Y=165 ⬅️ AJOUTÉ
+        // 2. Jours de Travail (Droite)
+        // J'ai décalé un peu pour que le texte long rentre
+        spr->setFont(FONT_UI); 
+        spr->setTextColor(COLOR_ACCENT); 
+        spr->drawString(String(finalWorkDays), cx + 50, 95); 
+        
+        spr->setFont(FONT_SMALL);
+        spr->setTextColor(COLOR_ACCENT);
+        // TEXTE MODIFIÉ ICI 👇
+        spr->drawString("Jours de travail", cx + 50, 115);
+
+        // 3. Décompte H:M:S
         char timeBuf[32];
         sprintf(timeBuf, "%02d h %02d m %02d s", hours, mins, secs);
-        
-        spr->setTextColor(COLOR_WHITE);
-        spr->setFont(FONT_UI); // Police moyenne lisible
+        spr->setTextColor(COLOR_WHITE); spr->setFont(FONT_UI); 
+        spr->setTextDatum(middle_center); // Recentrage global
         spr->drawString(String(timeBuf), cx, 165);
         
-        // Barre de progression secondes (Optionnel, pour le dynamisme)
         int barW = map(secs, 0, 60, 0, 200);
         spr->fillRect(cx - 100, 178, barW, 4, COLOR_ACCENT);
     }
 
-    // --- C. TEXTE EN BAS (Y=210) ---
-    spr->setFont(FONT_UI);
-    spr->setTextSize(1);
-    spr->setTextDatum(middle_center);
-    
-    // Ligne 1 : "avant"
-    spr->setTextColor(0x5555); // Gris très sombre
-    spr->drawString("avant", cx, 195);
-
-    // Ligne 2 : NOM DE L'EVENT
-    spr->setTextColor(COLOR_PRIMARY); // Cyan
-    spr->drawString(name, cx, 215);
+    spr->setFont(FONT_UI); spr->setTextSize(1); spr->setTextDatum(middle_center);
+    spr->setTextColor(0x5555); spr->drawString("avant", cx, 195);
+    spr->setTextColor(COLOR_PRIMARY); spr->drawString(name, cx, 215);
 }
-
 // --- DESSIN DES ICÔNES (Pixel Art Vectoriel) ---
 
 void CountdownRenderer::_drawIconGeneric(LGFX_Sprite* spr, int x, int y) {

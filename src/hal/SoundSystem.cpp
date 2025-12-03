@@ -119,36 +119,88 @@ void SoundSystem::update() {
 // --- Sons Prédéfinis ---
 // Ils appellent tone() ou _enqueue(), donc ils respecteront le flag _enabled
 
+// void SoundSystem::playStartup() {
+//     if (!_enabled) return;
+//     tone(0, 1); 
+//     _enqueue(880, 100); _enqueue(988, 100); _enqueue(1175, 100); _enqueue(1319, 200);
+// }
+// --- SONOTHÈQUE R2D2 / MAJIN ---
+
 void SoundSystem::playStartup() {
     if (!_enabled) return;
-    tone(0, 1); 
-    _enqueue(880, 100); _enqueue(988, 100); _enqueue(1175, 100); _enqueue(1319, 200);
+    tone(0, 1); // Reset
+    // Mélodie Axel F (Début)
+    _enqueue(784, 150); _enqueue(0, 50); _enqueue(932, 150); _enqueue(784, 150); 
+    _enqueue(0, 50); _enqueue(784, 100); _enqueue(1046, 150); _enqueue(932, 150);
 }
 
 void SoundSystem::playNotification() {
     if (!_enabled) return;
-    _enqueue(2000, 80); _enqueue(0, 50); _enqueue(2500, 80);
+    // Petit "Bip-Boup" neutre
+    _enqueue(2000, 50); _enqueue(0, 30); _enqueue(2500, 50);
 }
 
 void SoundSystem::playSuccess() {
     if (!_enabled) return;
-    _enqueue(1000, 80); _enqueue(1500, 80); _enqueue(2000, 100);
+    // R2D2 Content (Montée rapide)
+    tone(0, 1);
+    for(int i=0; i<5; i++) {
+        _enqueue(random(1500, 3000), 40); // 5 notes très courtes aigues
+    }
+    _enqueue(3500, 150); // Note finale
 }
 
 void SoundSystem::playError() {
     if (!_enabled) return;
+    // R2D2 Pas content (Grave et dissonant)
     tone(0, 1);
-    _enqueue(400, 200); _enqueue(0, 50); _enqueue(300, 400);
+    _enqueue(300, 150); _enqueue(200, 150); _enqueue(150, 300);
 }
-void SoundSystem::testSequence() {
+
+// --- NOUVELLES ÉMOTIONS ---
+
+void SoundSystem::playHappy() {
     if (!_enabled) return;
+    // Gazouillis joyeux (Chirps)
     tone(0, 1);
-    _enqueue(262, 200); // C4
-    _enqueue(294, 200); // D4
-    _enqueue(330, 200); // E4
-    _enqueue(349, 200); // F4
-    _enqueue(392, 200); // G4
-    _enqueue(440, 200); // A4
-    _enqueue(494, 200); // B4
-    _enqueue(523, 400); // C5
+    int base = 2000;
+    for(int i=0; i<6; i++) {
+        _enqueue(base + random(0, 1000), 50);
+        _enqueue(0, 20); // Petite pause
+    }
+}
+
+void SoundSystem::playSad() {
+    if (!_enabled) return;
+    // Plainte descendante (Whine)
+    tone(0, 1);
+    _enqueue(800, 300); _enqueue(700, 300); _enqueue(600, 400); _enqueue(500, 500);
+}
+
+void SoundSystem::playAngry() {
+    if (!_enabled) return;
+    // Agressif (Rapide, haché, medium)
+    tone(0, 1);
+    for(int i=0; i<8; i++) {
+        _enqueue(random(400, 800), 30);
+    }
+    _enqueue(300, 200);
+}
+
+void SoundSystem::playSurprised() {
+    if (!_enabled) return;
+    // "Ouh !" (Montée subite)
+    tone(0, 1);
+    _enqueue(500, 50); _enqueue(1000, 50); _enqueue(2000, 50); _enqueue(3000, 100);
+}
+
+void SoundSystem::playBored() {
+    if (!_enabled) return;
+    // Soupir électronique
+    tone(0, 1);
+    _enqueue(400, 200); _enqueue(350, 200); _enqueue(300, 400);
+}
+
+void SoundSystem::testSequence() {
+    playHappy();
 }

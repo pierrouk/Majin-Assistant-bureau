@@ -10,7 +10,6 @@
 #define NOTE_E5 659
 #define P 0 
 
-// Mélodie
 const uint16_t MELODY[] = {
     NOTE_G4, NOTE_A4, NOTE_B4, NOTE_B3, NOTE_G4, NOTE_A4, 
     NOTE_B3, NOTE_A4, NOTE_G4, NOTE_B3, NOTE_D5,          
@@ -19,7 +18,6 @@ const uint16_t MELODY[] = {
     NOTE_G4, NOTE_E5, NOTE_G4                             
 };
 
-// Durées
 const uint16_t DURATIONS[] = {
     250, 250, 1500, 250, 250, 1500,
     375, 125, 1000, 250, 250,
@@ -29,158 +27,108 @@ const uint16_t DURATIONS[] = {
 };
 
 const int TOTAL_NOTES = sizeof(MELODY) / sizeof(MELODY[0]);
+const int SNOW_COUNT = 60; 
+
+struct SnowFlake {
+    float x; float y; float speed; float size;
+};
 
 void BootSequence::_waitSafe(unsigned long ms, SoundSystem* voice) {
     unsigned long start = millis();
-    while (millis() - start < ms) {
-        voice->update(); 
-        delay(5);        
-    }
+    while (millis() - start < ms) { voice->update(); delay(5); }
 }
 
-// 🎮 MOTEUR D'INTRO SYNCHRONISÉ
+uint16_t BootSequence::_rainbowColor(uint8_t index) {
+    uint8_t region, remainder, p, q, t;
+    uint8_t h = index; uint8_t s = 255; uint8_t v = 255;
+    region = h / 43; remainder = (h - (region * 43)) * 6; 
+    p = (v * (255 - s)) >> 8; q = (v * (255 - ((s * remainder) >> 8))) >> 8; t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
+    uint8_t r, g, b;
+    switch (region) {
+        case 0: r = v; g = t; b = p; break; case 1: r = q; g = v; b = p; break; case 2: r = p; g = v; b = t; break;
+        case 3: r = p; g = q; b = v; break; case 4: r = t; g = p; b = v; break; default: r = v; g = p; b = q; break;
+    }
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+
 void BootSequence::_playIntroSync(LGFX_Majin* tft, SoundSystem* voice, ServoMotor* head) {
     int noteIndex = 0;
-    
-    float haloX = -50;       
-    float haloSpeed = 6.0;   
-    
-    LGFX_Sprite textSprite(tft);
-    textSprite.createSprite(320, 80); 
-    textSprite.setTextSize(3); 
-    textSprite.setTextDatum(middle_center);
-    textSprite.setFont(FONT_TITLE); 
+    int centerX = 160;
+    int centerY = 120; // Recentré car plus de montagnes
 
-    // Boucle Principale
+    SnowFlake snow[SNOW_COUNT];
+    for(int i=0; i<SNOW_COUNT; i++) {
+        snow[i].x = random(0, 320); snow[i].y = random(-240, 0); 
+        snow[i].speed = random(10, 35) / 10.0; snow[i].size = random(1, 3);
+    }
+
     while (noteIndex < TOTAL_NOTES || voice->isPlaying()) {
-        
         voice->update();
         if (!voice->isPlaying() && noteIndex < TOTAL_NOTES) {
-            uint16_t note = MELODY[noteIndex];
-            uint16_t dur = DURATIONS[noteIndex];
+            uint16_t note = MELODY[noteIndex]; uint16_t dur = DURATIONS[noteIndex];
             if (note > 0) voice->tone(note, dur); else voice->tone(0, dur);
             noteIndex++;
-            if (noteIndex % 4 == 0) { 
-                int target = (head->getAngle() > 90) ? 80 : 100;
-                head->setAngle(target);
-            }
+            if (noteIndex % 4 == 0) { int target = (head->getAngle() > 90) ? 80 : 100; head->setAngle(target); }
         }
 
-        // Effet Halo
-        textSprite.fillScreen(COLOR_BG);
-        textSprite.setTextColor(0x18E3); 
-        textSprite.drawString("MAJIN OS", 160, 40);
-        textSprite.setClipRect((int)haloX, 0, 60, 80); 
-        textSprite.setTextColor(COLOR_PRIMARY); 
-        textSprite.drawString("MAJIN OS", 160, 40);
-        textSprite.clearClipRect(); 
-        haloX += haloSpeed;
-        if (haloX > 320) haloX = -60;
-        textSprite.pushSprite(0, 80);
-        delay(16); 
+        tft->startWrite();
+        tft->fillScreen(COLOR_BG);
+
+        // Neige
+        for(int i=0; i<SNOW_COUNT; i++) {
+            snow[i].y += snow[i].speed; snow[i].x += sin(snow[i].y * 0.05) * 0.5;
+            if (snow[i].y > 240) { snow[i].y = -5; snow[i].x = random(0, 320); }
+            tft->fillCircle((int)snow[i].x, (int)snow[i].y, snow[i].size, COLOR_WHITE);
+        }
+
+        // Texte MAJIN OS
+        tft->setFont(FONT_TITLE);
+        tft->setTextSize(2.0); tft->setTextDatum(middle_center);
+        String title = "MAJIN OS";
+        int totalW = tft->textWidth(title);
+        if (totalW > 300) { tft->setTextSize(1.5); totalW = tft->textWidth(title); }
+        int cursorX = centerX - (totalW / 2);
+        uint8_t baseHue = (millis() / 10) % 255;
+
+        for (int i = 0; i < title.length(); i++) {
+            tft->setTextColor(_rainbowColor(baseHue + (i * 15)));
+            tft->setCursor(cursorX, centerY - 20); tft->print(title[i]);
+            cursorX += tft->textWidth(title.substring(i, i+1));
+        }
+
+        tft->setFont(FONT_UI); tft->setTextSize(1.5); tft->setTextColor(COLOR_WHITE);
+        tft->drawString("Lets ride !!!", centerX, centerY + 40);
+        tft->endWrite();
     }
     
-    textSprite.deleteSprite();
-
-    // --- FIN DE LA MUSIQUE : TRANSITION RÉVEIL ---
-    
-    tft->fillScreen(COLOR_BG); 
-    head->setAngle(90); 
-
-    // ⚠️ CORRECTION DIMENSIONS : Adaptation au style "Cercle EMO"
-    int eyeWidth = EYE_RADIUS_MAX * 2;  // Largeur totale
-    int eyeRadius = EYE_RADIUS_MAX;     // Rayon max (cercle)
-    int eyeSpacing = 80;
-    uint16_t color = COLOR_PRIMARY;
-    
-    int centerY = 120;
-    int leftX = 160 - eyeSpacing;
-    int rightX = 160 + eyeSpacing;
-
-    // 1. Yeux fermés
-    tft->fillRoundRect(leftX - eyeWidth/2, centerY, eyeWidth, 4, 2, color);
-    tft->fillRoundRect(rightX - eyeWidth/2, centerY, eyeWidth, 4, 2, color);
+    // Transition Vectorielle
+    tft->fillScreen(COLOR_BG); head->setAngle(90); 
+    int eyeW_Base = 55; int eyeH_Base = 85; int eyeSpacing = 35;
+    tft->fillEllipse(centerX - eyeSpacing - eyeW_Base/2, 120, eyeW_Base/2, 2, COLOR_WHITE);
+    tft->fillEllipse(centerX + eyeSpacing + eyeW_Base/2, 120, eyeW_Base/2, 2, COLOR_WHITE);
     delay(800);
-
-    // 2. "Groggy"
-    for (int h = 4; h <= 20; h+=2) {
-         tft->fillRect(leftX - eyeWidth/2, centerY - h/2 - 5, eyeWidth, h + 10, COLOR_BG);
-         tft->fillRect(rightX - eyeWidth/2, centerY - h/2 - 5, eyeWidth, h + 10, COLOR_BG);
-         
-         // On adapte le rayon pour que ce soit plat quand c'est petit
-         int r = (h < eyeRadius*2) ? h/2 : eyeRadius;
-         tft->fillRoundRect(leftX - eyeWidth/2, centerY - h/2, eyeWidth, h, r, color);
-         tft->fillRoundRect(rightX - eyeWidth/2, centerY - h/2, eyeWidth, h, r, color);
-         delay(50); 
+    for (int h = 2; h <= eyeH_Base + 5; h+=4) { 
+         tft->startWrite(); tft->fillScreen(COLOR_BG); 
+         int currentW = eyeW_Base + (eyeH_Base - h) / 4;
+         tft->fillEllipse(centerX - eyeSpacing - eyeW_Base/2, 120, currentW/2, h/2, COLOR_WHITE);
+         tft->fillEllipse(centerX + eyeSpacing + eyeW_Base/2, 120, currentW/2, h/2, COLOR_WHITE);
+         tft->endWrite(); delay(20); 
     }
-    delay(400);
-
-    // 3. Refermeture
-    tft->fillRect(leftX - eyeWidth/2 - 5, centerY - 30, eyeWidth + 10, 60, COLOR_BG);
-    tft->fillRect(rightX - eyeWidth/2 - 5, centerY - 30, eyeWidth + 10, 60, COLOR_BG);
-    
-    tft->fillRoundRect(leftX - eyeWidth/2, centerY, eyeWidth, 4, 2, color);
-    tft->fillRoundRect(rightX - eyeWidth/2, centerY, eyeWidth, 4, 2, color);
-    delay(600);
-
-    // 4. "RÉVEIL !" (Ouverture complète)
-    int targetH = EYE_RADIUS_MAX * 2; // Hauteur pleine (cercle)
-    int maxH = targetH + 10; // Overshoot
-    
-    for (int h = 4; h <= maxH; h+=6) { 
-         tft->fillRect(leftX - eyeWidth/2, centerY - h/2 - 5, eyeWidth, h + 10, COLOR_BG);
-         tft->fillRect(rightX - eyeWidth/2, centerY - h/2 - 5, eyeWidth, h + 10, COLOR_BG);
-
-         int r = (h < eyeWidth) ? h/2 : eyeRadius;
-         tft->fillRoundRect(leftX - eyeWidth/2, centerY - h/2, eyeWidth, h, r, color);
-         tft->fillRoundRect(rightX - eyeWidth/2, centerY - h/2, eyeWidth, h, r, color);
-         delay(10); 
-    }
-    
-    // Stabilisation
-    tft->fillRect(leftX - eyeWidth/2 - 5, centerY - maxH/2 - 5, eyeWidth + 10, maxH + 10, COLOR_BG);
-    tft->fillRect(rightX - eyeWidth/2 - 5, centerY - maxH/2 - 5, eyeWidth + 10, maxH + 10, COLOR_BG);
-    
-    tft->fillRoundRect(leftX - eyeWidth/2, centerY - targetH/2, eyeWidth, targetH, eyeRadius, color);
-    tft->fillRoundRect(rightX - eyeWidth/2, centerY - targetH/2, eyeWidth, targetH, eyeRadius, color);
-
-    // ✨ GLINT
-    tft->fillCircle(leftX + 20, centerY - targetH/4, 12, EYE_GLINT_COLOR);
-    tft->fillCircle(rightX + 20, centerY - targetH/4, 12, EYE_GLINT_COLOR);
-    
-    voice->playSuccess();
-    _waitSafe(200, voice); 
+    tft->fillScreen(COLOR_BG);
+    int lx = centerX - eyeSpacing - eyeW_Base/2; int rx = centerX + eyeSpacing + eyeW_Base/2;
+    tft->fillEllipse(lx, 120, eyeW_Base/2, eyeH_Base/2, COLOR_WHITE); tft->fillRect(lx - 6, 120 - 6, 12, 12, COLOR_BLACK); 
+    tft->fillEllipse(rx, 120, eyeW_Base/2, eyeH_Base/2, COLOR_WHITE); tft->fillRect(rx - 6, 120 - 6, 12, 12, COLOR_BLACK); 
+    voice->playSuccess(); _waitSafe(200, voice); 
 }
 
 void BootSequence::run(ServoMotor* head, SoundSystem* voice, DisplayDriver* display, 
-                       SettingsManager* settings, UIManager* ui, 
-                       CoreManager* core, NetworkManager* net) {
-    // ⚠️ Attention : BootSequence ne connaît pas UsbManager.
-    // C'est problématique car UIManager::begin en a besoin.
-    // Solution : On passe NULL pour l'instant dans le boot car on n'utilise pas la souris pendant l'intro.
-    // L'UI sera réinitialisée correctement dans TaskGUI avec le vrai pointeur.
-    
-    bool isFirstBoot = !settings->isSetupDone();
-    if (!isFirstBoot) {
-        voice->playStartup();
-        _waitSafe(100, voice);
-        uint8_t targetBrightness = settings->getScreenBrightness();
-        for(int i=0; i<=targetBrightness; i+=10) { display->setBrightness(i); delay(5); }
-        
-        // ⚠️ ICI : nullptr pour usb
-        ui->begin(display, core, net, settings, nullptr); 
-        return;
+                       SettingsManager* settings, UIManager* ui, CoreManager* core, NetworkManager* net) {
+    if (settings->isSetupDone()) {
+        display->setBrightness(settings->getScreenBrightness());
+        ui->begin(display, core, net, settings, nullptr); return;
     }
-
-    Serial.println("🎬 [Boot]: Intro Halo...");
-    display->setBrightness(200);
-    LGFX_Majin* tft = display->getLGFX();
-    tft->fillScreen(COLOR_BG);
-
+    display->setBrightness(200); LGFX_Majin* tft = display->getLGFX();
     _playIntroSync(tft, voice, head);
-
-    // ⚠️ ICI : nullptr pour usb
     ui->begin(display, core, net, settings, nullptr); 
     voice->mute();
-    Serial.println("🎬 [Boot]: Fin.");
 }

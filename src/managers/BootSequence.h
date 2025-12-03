@@ -19,8 +19,11 @@ public:
 private:
     void _waitSafe(unsigned long ms, SoundSystem* voice);
     
-    // ⬅️ NOUVEAU : Moteur unique Audio/Vidéo synchronisé
+    // Moteur unique Audio/Vidéo synchronisé
     void _playIntroSync(LGFX_Majin* tft, SoundSystem* voice, ServoMotor* head);
+
+    // 🆕 Helper pour l'effet Arc-en-ciel (Sprint 2)
+    uint16_t _rainbowColor(uint8_t index);
 };
 
 #endif
