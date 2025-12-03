@@ -43,12 +43,7 @@ void TaskGUI(void *pvParameters) {
         // ---------------------------------------------------------
         isTouched = majinScreen.getTouchSafe(&touchX, &touchY);
         
-        // FEEDBACK HAPTIQUE (Vibreur au toucher)
-        static bool wasTouched = false;
-        if (isTouched && !wasTouched) {
-            majinHaptic.click(); 
-        }
-        wasTouched = isTouched;
+        
 
         // Traitement du geste (Tap, Swipe, Long Press...)
         GestureType gesture = majinInput.process(isTouched, touchX, touchY);

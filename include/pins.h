@@ -30,6 +30,5 @@
 #define SERVO_PIN        42
 #define TOUCH_BUTTON_PIN 13
 #define BUZZER_PIN       21
-// ⬅️ NOUVEAU : Vibreur (Recyclage de l'ancienne pin 41)
-#define VIBE_PIN         46
+
 #endif // PINS_H

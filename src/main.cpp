@@ -9,7 +9,6 @@ TouchSensor       majinTouch;
 SoundSystem       majinVoice;
 DisplayDriver     majinScreen;
 EnvironmentSensor majinEnv; 
-HapticDriver majinHaptic(VIBE_PIN); // ⬅️ Instanciation sur la Pin 41
 
 NetworkManager    majinNet;
 CoreManager       majinCore;
@@ -34,9 +33,7 @@ void setup() {
     majinTouch.begin();
     majinEyes.begin(&Wire);
     majinEnv.begin();
-    majinHaptic.begin(); // ⬅️ Démarrage du vibreur
     
-    majinHaptic.doubleBuzz(); // "Bzz Bzz" au démarrage pour confirmer que ça marche
     // 2. Init Settings
     majinSettings.begin();
 
