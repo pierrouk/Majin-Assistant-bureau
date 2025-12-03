@@ -1,6 +1,7 @@
 #include "NetworkManager.h"
 #include <Update.h> 
 #include <ESPmDNS.h> // ⬅️ NOUVEAU : Bibliothèque mDNS
+
 NetworkManager::NetworkManager() : _server(80) {
 }
 
@@ -21,14 +22,14 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
     wifiManager.setTitle("Majin OS Setup");
     wifiManager.setDebugOutput(false); 
     
-    // Timeout Infini (0) pour éviter le reboot
+    // Timeout Infini
     wifiManager.setConfigPortalTimeout(0);
 
     String currentName = settings->getRobotName();
     WiFiManagerParameter custom_robot_name("robot_name", "Donne-moi un nom (Requis)", currentName.c_str(), 32);
     wifiManager.addParameter(&custom_robot_name);
 
-    // Tentative de connexion
+    // Connexion
     bool res = wifiManager.autoConnect("Majin_Setup", "majin1234");
 
     if(!res) {
@@ -45,12 +46,14 @@ bool NetworkManager::begin(SettingsManager* settings, CoreManager* core, SoundSy
 
     log_i("🟢 [Network]: Connecté !");
     _connected = true;
+
     // ⬅️ NOUVEAU : Démarrage mDNS (http://majin.local)
     if (MDNS.begin("majin")) {
         log_i("🌐 [Network]: mDNS démarré ! Accès via http://majin.local");
     } else {
         log_i("⚠️ [Network]: Erreur mDNS");
     }
+
     setupWebServer();
     return true;
 }
@@ -117,7 +120,6 @@ void NetworkManager::setupWebServer() {
 
     _server.on("/settings", HTTP_GET, [this](AsyncWebServerRequest *request){ request->send(200, "text/html", PageSettings::getHTML()); });
 
-    // PAGE PERSONNALISATION (Mise à jour avec Calibration Lumière)
     _server.on("/perso", HTTP_GET, [this](AsyncWebServerRequest *request){
         bool t = _settings->getShowTime();
         bool s = _settings->getShowSensors();
@@ -128,7 +130,7 @@ void NetworkManager::setupWebServer() {
         String boot = _settings->getBootLogoText();
         int mood = _settings->getManualMood();
         
-        // Nouvelles variables Calibration
+        // Variables Calibration
         float sleepTh = _settings->getAutoSleepThreshold();
         int scrMin = _settings->getScreenMin();
         int scrMax = _settings->getScreenMax();
@@ -136,14 +138,8 @@ void NetworkManager::setupWebServer() {
         request->send(200, "text/html", PagePersonalization::getHTML(t, s, lat, lon, en, city, boot, mood, sleepTh, scrMin, scrMax));
     });
 
-   // Et mettre à jour l'appel d'affichage de la page HTML
     _server.on("/countdown", HTTP_GET, [this](AsyncWebServerRequest *request){
-        request->send(200, "text/html", PageCountdown::getHTML(
-            _settings->getEventName(), 
-            _settings->getEventTimestamp(), 
-            _settings->getEventType(),
-            _settings->getEventHolidays() // Nouvel argument
-        ));
+        request->send(200, "text/html", PageCountdown::getHTML(_settings->getEventName(), _settings->getEventTimestamp(), _settings->getEventType(), _settings->getEventHolidays()));
     });
 
     _server.on("/tamagotchi", HTTP_GET, [this](AsyncWebServerRequest *request){ request->send(200, "text/html", PageTamagotchi::getHTML()); });
@@ -202,7 +198,6 @@ void NetworkManager::setupWebServer() {
         } else { request->send(400); }
     });
 
-    // 💡 NOUVELLE ROUTE API : CALIBRATION LUMIÈRE
     _server.on("/api/config/light", HTTP_POST, [this](AsyncWebServerRequest *request){
         if (request->hasParam("th") && request->hasParam("min") && request->hasParam("max")) {
             float th = request->getParam("th")->value().toFloat();
@@ -253,23 +248,17 @@ void NetworkManager::setupWebServer() {
             String tsStr = request->getParam("timestamp", true)->value();
             String typeStr = request->hasParam("type", true) ? request->getParam("type", true)->value() : "0";
             
-            // NOUVEAU PARAM
             String holStr = request->hasParam("holidays", true) ? request->getParam("holidays", true)->value() : "0";
             
             unsigned long ts = strtoul(tsStr.c_str(), NULL, 10);
             int type = typeStr.toInt();
             int holidays = holStr.toInt();
             
-            _settings->setEventName(name); 
-            _settings->setEventTimestamp(ts); 
-            _settings->setEventType(type);
-            _settings->setEventHolidays(holidays); // Sauvegarde
-            
+            _settings->setEventName(name); _settings->setEventTimestamp(ts); 
+            _settings->setEventType(type); _settings->setEventHolidays(holidays);
             request->redirect("/countdown");
         } else { request->send(400); }
     });
-
-    
 
     _server.on("/api/countdown/delete", HTTP_POST, [this](AsyncWebServerRequest *request){
         _settings->setEventName(""); _settings->setEventTimestamp(0); request->send(200, "text/plain", "Deleted");
