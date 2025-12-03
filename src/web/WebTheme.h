@@ -1,6 +1,7 @@
 #ifndef WEB_THEME_H
 #define WEB_THEME_H
 #include <Arduino.h>
+#include "../include/Version.h"
 
 class WebTheme {
 public:
@@ -59,8 +60,10 @@ public:
         return html;
     }
 
-    static String getFooter() { return "<div class='footer'>MAJIN OS v2.4 • Connected Intelligence</div>"; }
-    
+    static String getFooter() {
+        // MAJIN_FW_VERSION est déjà une string, pas besoin de String() autour
+        return "<div class='footer'>Majin OS " + String(MAJIN_FW_VERSION) + "<br>Build: " + String(MAJIN_BUILD_DATE) + "</div>";
+    }
     static String getSetupInjectionJS() {
         return R"rawliteral(<script>window.onload=function(){var h=document.createElement('div');h.innerHTML='<div style="font-size:40px;text-align:center">🤖</div><h1 style="text-align:center;color:#00F0FF">MAJIN OS</h1>';document.body.insertBefore(h,document.body.firstChild);var w=document.createElement('div');w.style.cssText="background:#1a1a1a;padding:15px;color:#ccc;border-left:3px solid #00F0FF;margin-bottom:20px";w.innerHTML='<p><strong>Bienvenue !</strong><br>Connecte-moi au WiFi.</p>';var t=document.querySelector('form')||document.querySelector('button');if(t)t.parentNode.insertBefore(w,t);var b=document.querySelectorAll('button');b.forEach(function(x){if(x.innerText.toLowerCase().includes('wifi'))x.style.background="#00F0FF";});var i=document.getElementById('robot_name');if(i){i.required=true;i.placeholder="Nom du robot";}};</script>)rawliteral";
     }
