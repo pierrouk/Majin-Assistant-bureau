@@ -26,7 +26,7 @@ bool LightSensor::begin(TwoWire *wirePtr) {
 
 void LightSensor::configureAutoRange() {
     // Gain : 1/8 (Bon pour éviter la saturation en lumière intérieure forte)
-    _veml.setGain(VEML7700_GAIN_1_8); 
+    _veml.setGain(VEML7700_GAIN_2); 
     
     // Integration Time : 100ms (Réactif)
     _veml.setIntegrationTime(VEML7700_IT_100MS);
