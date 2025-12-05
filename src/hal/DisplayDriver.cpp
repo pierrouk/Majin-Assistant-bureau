@@ -19,7 +19,7 @@ bool DisplayDriver::begin() {
     uint16_t calData[] = { 239, 309, 228, 0, 9, 316, 16, 0 };
     _tft.setTouchCalibrate(calData);
 
-    _tft.setBrightness(200); 
+    _tft.setBrightness(250); 
     _tft.fillScreen(TFT_BLACK);
     
     // 🗑️ NETTOYAGE : On retire le texte de debug
