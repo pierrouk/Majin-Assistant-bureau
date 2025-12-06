@@ -69,12 +69,12 @@ void TaskSystem(void *pvParameters) {
                 majinCore.setSensorData(env.temperature, env.humidity, smoothedLux);
             }
             
-            // Auto Brightness
-            int targetBright = map((long)smoothedLux, 0, (long)daylightLux, brightMin, brightMax);
-            if (targetBright > 255) targetBright = 255;
-            if (targetBright < brightMin) targetBright = brightMin;
+            // // Auto Brightness
+            // int targetBright = map((long)smoothedLux, 0, (long)daylightLux, brightMin, brightMax);
+            // if (targetBright > 255) targetBright = 255;
+            // if (targetBright < brightMin) targetBright = brightMin;
 
-            majinScreen.setBrightness(targetBright);
+            //majinScreen.setBrightness(targetBright);
             majinCore.update();
         }
         

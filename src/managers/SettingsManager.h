@@ -79,7 +79,7 @@ private:
     bool _cache_buzzerEnabled = true;
     bool _cache_weatherEnabled = true;
     uint8_t _cache_volume = 50;
-    uint8_t _cache_brightness = 200;
+    uint8_t _cache_brightness = 255;
     String _cache_name = "Majin Bot";
     String _cache_lat = "48.8566"; 
     String _cache_lon = "2.3522";

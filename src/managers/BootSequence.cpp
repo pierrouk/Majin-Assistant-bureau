@@ -136,8 +136,8 @@ void BootSequence::run(ServoMotor* head, SoundSystem* voice, DisplayDriver* disp
         display->setBrightness(settings->getScreenBrightness());
         ui->begin(display, core, net, settings, nullptr); return;
     }
-    display->setBrightness(200); LGFX_Majin* tft = display->getLGFX();
+    display->setBrightness(255); LGFX_Majin* tft = display->getLGFX();
     _playIntroSync(tft, voice, head);
     ui->begin(display, core, net, settings, nullptr); 
     voice->mute();
-}
+} 
